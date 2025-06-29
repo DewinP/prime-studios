@@ -1,4 +1,4 @@
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient } from "@/trpc/server";
 import { BeatsList } from "@/components/beats-list";
 import type { Beat } from "@/components/beats-list";
 
@@ -46,8 +46,6 @@ const beats: Beat[] = [
 ];
 
 export default async function Home() {
-  void api.post.getLatest.prefetch();
-
   return (
     <HydrateClient>
       <main className="flex min-h-screen flex-col">
