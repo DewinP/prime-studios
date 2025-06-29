@@ -97,9 +97,9 @@ export function BeatsList({ beats }: { beats: Beat[] }) {
               <div className="flex w-full flex-wrap justify-center gap-1 md:w-auto md:justify-start">
                 {beat.tags.map((tag) => (
                   <Badge
+                    variant="outline"
                     key={tag}
-                    variant="secondary"
-                    className="max-w-[80px] truncate px-2 py-0.5 text-xs font-normal transition-all group-hover:underline"
+                    className="max-w-[80px] truncate px-2 py-0.5 text-xs font-normal transition-all group-hover:underline hover:cursor-pointer"
                   >
                     {tag}
                   </Badge>
