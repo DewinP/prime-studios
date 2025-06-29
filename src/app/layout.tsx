@@ -24,12 +24,17 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`dark ${geist.variable}`}>
+      <head>
+        <link rel="stylesheet" href="https://use.typekit.net/byz4qug.css" />
+      </head>
       <body>
         <TRPCReactProvider>
           <Provider>
             <div className="min-h-screen w-full flex-1 flex-col items-center justify-center">
               <Header />
-              <main className="mx-auto h-full max-w-7xl">{children}</main>
+              <div className="supports-[backdrop-filter]:bg-background/60 from-background/80 overflow-y-hidden bg-gradient-to-b to-[#272627]">
+                <main className="mx-auto h-full max-w-7xl">{children}</main>
+              </div>
               <AudioPlayerContainer />
             </div>
           </Provider>

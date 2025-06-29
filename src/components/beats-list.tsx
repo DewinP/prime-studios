@@ -36,7 +36,7 @@ export function BeatsList({ beats }: { beats: Beat[] }) {
           beats.map((beat) => (
             <div
               key={beat.id}
-              className="group hover:bg-muted/50 flex cursor-pointer flex-col items-center gap-2 px-2 py-2 transition-colors md:grid md:grid-cols-[56px_1.5fr_64px_1fr_120px] md:px-4"
+              className="group hover:bg-muted/50 flex flex-col items-center gap-2 px-2 py-2 transition-colors md:grid md:grid-cols-[56px_1.5fr_64px_1fr_120px] md:px-4"
               onClick={() =>
                 setTrack({
                   id: Number(beat.id),
@@ -59,7 +59,7 @@ export function BeatsList({ beats }: { beats: Beat[] }) {
               </div>
               {/* Title */}
               <div className="w-full truncate text-center text-sm font-medium md:w-auto md:text-left">
-                <span className="cursor-pointer transition-all group-hover:underline">
+                <span className="font-alfarn2 cursor-pointer transition-all group-hover:underline">
                   {beat.title}
                 </span>
               </div>
@@ -73,7 +73,7 @@ export function BeatsList({ beats }: { beats: Beat[] }) {
                   <Badge
                     key={tag}
                     variant="secondary"
-                    className="max-w-[80px] cursor-pointer truncate px-2 py-0.5 text-xs font-normal transition-all group-hover:underline"
+                    className="max-w-[80px] truncate px-2 py-0.5 text-xs font-normal transition-all group-hover:underline"
                   >
                     {tag}
                   </Badge>
@@ -84,12 +84,15 @@ export function BeatsList({ beats }: { beats: Beat[] }) {
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-7 w-7 p-0"
+                  className="h-7 w-7 cursor-pointer p-0"
                   aria-label="Share"
                 >
                   <Share2 className="h-4 w-4" />
                 </Button>
-                <Button size="sm" className="h-7 px-3 text-xs font-semibold">
+                <Button
+                  size="sm"
+                  className="hover:bg-primary h-7 cursor-pointer px-3 text-xs font-semibold transition-colors hover:shadow-lg"
+                >
                   <ShoppingCart className="mr-1 h-4 w-4" /> Add
                 </Button>
               </div>

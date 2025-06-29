@@ -4,30 +4,30 @@ import { ShoppingCart } from "lucide-react";
 
 export function Header() {
   return (
-    <header className="supports-[backdrop-filter]:bg-background/60 border-b px-10 backdrop-blur">
-      <div className="mx-auto flex flex-col items-center gap-2 px-4 pb-2">
+    <header className="supports-[backdrop-filter]:bg-background/60 border-b backdrop-blur">
+      <div className="mx-auto flex flex-col items-center px-4 pb-2">
         <Link href="/" className="flex items-center justify-center">
-          <Image
-            src="/logo.png"
-            alt="Prime Studios"
-            width={200}
-            height={200}
-            className="drop-shadow-lg"
-          />
+          <Image src="/logo.png" alt="Prime Studios" width={200} height={200} />
         </Link>
-        <nav className="mt-2 flex items-center justify-center gap-6 text-sm font-medium">
-          <Link href="/" className="hover:text-primary/80 transition-colors">
+        <nav className="mt-2 flex items-center justify-center gap-6 text-xs font-medium">
+          <Link
+            href="/"
+            className="hover:text-primary/80 transition-colors"
+            style={{ fontFamily: "alfarn-2" }}
+          >
             TRACKS
           </Link>
           <Link
             href="/about"
             className="hover:text-primary/80 transition-colors"
+            style={{ fontFamily: "alfarn-2" }}
           >
             ABOUT
           </Link>
           <Link
             href="/contact"
             className="hover:text-primary/80 transition-colors"
+            style={{ fontFamily: "alfarn-2" }}
           >
             CONTACT
           </Link>
@@ -35,8 +35,9 @@ export function Header() {
             href="/cart"
             className="hover:bg-muted flex items-center justify-center rounded border px-2 py-1 transition-colors"
             aria-label="Cart"
+            style={{ fontFamily: "alfarn-2" }}
           >
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="h-3 w-3" />
           </Link>
         </nav>
       </div>

@@ -16,6 +16,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { usePlayerStore } from "@/lib/playerStore";
+import { Button } from "@/components/ui/button";
 
 export default function AudioPlayer() {
   const currentTrack = usePlayerStore((state) => state.currentTrack);
@@ -360,7 +361,7 @@ export default function AudioPlayer() {
       {/* Progress Bar as Top Border */}
       <div
         ref={progressRef}
-        className="relative w-full cursor-pointer transition-all duration-200"
+        className="relative w-full transition-all duration-200"
         style={{ height: "8px" }}
         onClick={handleSeek}
         onMouseDown={handleMouseDown}
@@ -379,22 +380,21 @@ export default function AudioPlayer() {
 
         {/* Visible progress bar */}
         <div
-          className="absolute top-0 left-0 w-full bg-gray-700 transition-all duration-200"
-          style={{ height: "8px" }}
+          className="absolute top-1/2 left-0 w-full -translate-y-1/2 bg-gray-700 transition-all duration-200"
+          style={{ height: isHovering ? "8px" : "4px" }}
         >
           {/* Progress fill */}
           <div
-            className="absolute top-0 left-0 bg-gradient-to-r from-purple-400 to-purple-600 transition-all duration-200"
+            className="bg-primary absolute top-0 left-0 h-full transition-all duration-200"
             style={{
               width: `${progress}%`,
-              height: "8px",
             }}
           />
         </div>
 
         {/* Progress handle */}
         <div
-          className={`bg-background absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-purple-400 shadow-md transition-all duration-200 ${
+          className={`bg-background border-primary absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border shadow-md transition-all duration-200 ${
             isDragging ? "scale-125 shadow-lg" : "hover:scale-110"
           }`}
           style={{ left: `${progress}%` }}
@@ -421,26 +421,29 @@ export default function AudioPlayer() {
         )}
       </div>
 
-      <div className="relative flex items-center px-6 py-3">
+      <div className="relative flex items-center px-6 py-2">
         {/* Left side - Art, Name, Artist */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Image
             src={currentTrack.cover}
             alt={currentTrack.title}
-            width={56}
-            height={56}
-            className="border-border bg-background rounded-md border"
+            width={40}
+            height={40}
+            className="border-border bg-background h-10 w-10 rounded-md border"
           />
           <div className="min-w-0 flex-1">
-            <div className="text-foreground font-semibold">
+            <div
+              className="text-foreground text-base font-semibold"
+              style={{ fontFamily: "alfarn-2, sans-serif" }}
+            >
               {currentTrack.title}
             </div>
-            <div className="text-sm text-gray-400">{currentTrack.artist}</div>
+            <div className="text-xs text-gray-400">{currentTrack.artist}</div>
           </div>
         </div>
 
         {/* Center - Main Audio Controls */}
-        <div className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-3">
+        <div className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2">
           <button className="group border-border bg-background relative cursor-pointer rounded-lg border p-2.5 transition-all hover:bg-gray-800">
             <Shuffle className="h-4 w-4 text-gray-300" />
             <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -453,9 +456,12 @@ export default function AudioPlayer() {
               Previous
             </div>
           </button>
-          <button
-            className="group relative cursor-pointer rounded-lg bg-purple-600 p-3 transition-all hover:bg-purple-700"
+          <Button
+            className="group relative rounded-lg p-3 transition-all"
             onClick={() => setIsPlaying(!isPlaying)}
+            variant="default"
+            size="icon"
+            aria-label={isPlaying ? "Pause" : "Play"}
           >
             <div className="flex h-5 w-5 items-center justify-center">
               {isPlaying ? (
@@ -467,7 +473,7 @@ export default function AudioPlayer() {
             <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
               {isPlaying ? "Pause" : "Play"}
             </div>
-          </button>
+          </Button>
           <button className="group border-border bg-background relative cursor-pointer rounded-lg border p-2.5 transition-all hover:bg-gray-800">
             <SkipForward className="h-4 w-4 text-gray-300" />
             <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -476,7 +482,7 @@ export default function AudioPlayer() {
           </button>
           <button
             onClick={handleRepeatClick}
-            className="group border-border bg-background relative cursor-pointer rounded-lg border p-2.5 transition-all hover:bg-gray-800"
+            className="group border-border bg-background relative rounded-lg border p-2.5 transition-all hover:bg-gray-800"
           >
             {repeatMode === "none" ? (
               <Repeat className="h-4 w-4 text-gray-500" />
@@ -496,11 +502,11 @@ export default function AudioPlayer() {
         </div>
 
         {/* Right side - Volume Controls and Cart */}
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-2">
           <div className="flex items-center gap-3 px-2 py-1">
             <button
               onClick={toggleMute}
-              className="group relative cursor-pointer rounded p-1 hover:bg-gray-800"
+              className="group relative rounded p-1 hover:bg-gray-800"
             >
               {isMuted ? (
                 <VolumeX className="h-4 w-4 text-gray-300" />
@@ -518,15 +524,15 @@ export default function AudioPlayer() {
               step="0.01"
               value={isMuted ? 0 : volume}
               onChange={handleVolumeChange}
-              className="h-1 w-16 cursor-pointer appearance-none rounded-lg bg-gray-700 focus:ring-2 focus:ring-purple-500/40 focus:outline-none"
+              className="focus:ring-primary/40 [&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:bg-primary h-1 w-16 cursor-pointer appearance-none rounded-lg bg-gray-700 focus:ring-2 focus:outline-none [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full"
               style={{
-                background: `linear-gradient(to right, #a78bfa 0%, #a78bfa ${(isMuted ? 0 : volume) * 100}%, #374151 ${(isMuted ? 0 : volume) * 100}%, #374151 100%)`,
+                background: `linear-gradient(to right, #e5a629 0%, #e5a629 ${(isMuted ? 0 : volume) * 100}%, #374151 ${(isMuted ? 0 : volume) * 100}%, #374151 100%)`,
               }}
               aria-label="Volume"
             />
           </div>
           <button className="group border-border bg-background relative cursor-pointer rounded-lg border p-2.5 transition-all hover:bg-gray-800">
-            <ShoppingCart className="h-4 w-4 text-purple-400" />
+            <ShoppingCart className="text-primary h-4 w-4" />
             <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
               Add to Cart
             </div>
