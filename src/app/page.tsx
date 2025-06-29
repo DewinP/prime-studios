@@ -1,6 +1,3 @@
-import Link from "next/link";
-
-import { LatestPost } from "@/app/_components/post";
 import { api, HydrateClient } from "@/trpc/server";
 import { BeatsList } from "@/components/beats-list";
 import type { Beat } from "@/components/beats-list";
@@ -14,6 +11,7 @@ const beats: Beat[] = [
     artUrl: "https://picsum.photos/seed/beat1/80/80",
     audioUrl: "/bodies.mp3",
     artist: "archive.org",
+    price: 100,
   },
   {
     id: "2",
@@ -23,6 +21,7 @@ const beats: Beat[] = [
     artUrl: "https://picsum.photos/seed/beat2/80/80",
     audioUrl: "/bodies.mp3",
     artist: "prime",
+    price: 100,
   },
   {
     id: "3",
@@ -32,6 +31,7 @@ const beats: Beat[] = [
     artUrl: "https://picsum.photos/seed/beat3/80/80",
     audioUrl: "/bodies.mp3",
     artist: "prime",
+    price: 100,
   },
   {
     id: "4",
@@ -41,6 +41,7 @@ const beats: Beat[] = [
     artUrl: "https://picsum.photos/seed/beat4/80/80",
     audioUrl: "/bodies.mp3",
     artist: "prime",
+    price: 100,
   },
 ];
 

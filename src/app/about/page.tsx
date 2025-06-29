@@ -6,7 +6,7 @@ export default function AboutPage() {
     <main className="min-h-screen flex-col justify-center p-10">
       <div className="mx-auto h-[60vh] w-[800px] overflow-hidden rounded-lg">
         <Image
-          src="/studio-inside.png"
+          src="/studio-equipment.jpg"
           alt="Prime Studio Inside"
           width={1920}
           height={1080}

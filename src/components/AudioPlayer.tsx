@@ -7,7 +7,6 @@ import {
   Pause,
   Volume2,
   VolumeX,
-  RotateCcw,
   Shuffle,
   SkipBack,
   SkipForward,
@@ -16,12 +15,14 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { usePlayerStore } from "@/lib/playerStore";
+import { useCartStore } from "@/lib/cartStore";
 import { Button } from "@/components/ui/button";
 
 export default function AudioPlayer() {
   const currentTrack = usePlayerStore((state) => state.currentTrack);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
   const setIsPlaying = usePlayerStore((state) => state.setIsPlaying);
+  const { addItem, isInCart, removeItem } = useCartStore();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
   const [progress, setProgress] = useState(0);
@@ -40,6 +41,11 @@ export default function AudioPlayer() {
   const audioOperationLockRef = useRef(false);
   const playPauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [repeatMode, setRepeatMode] = useState<"none" | "one" | "all">("none");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isAudioActuallyPlaying = () => {
     if (!audioRef.current) return false;
@@ -348,6 +354,23 @@ export default function AudioPlayer() {
     if (nextMode) setRepeatMode(nextMode);
   };
 
+  const handleAddToCart = () => {
+    if (!currentTrack) return;
+
+    if (isInCart(currentTrack.id)) {
+      removeItem(currentTrack.id);
+    } else {
+      addItem({
+        id: currentTrack.id,
+        title: currentTrack.title,
+        artist: currentTrack.artist,
+        price: 9.99, // Default price
+        cover: currentTrack.cover,
+        audioUrl: currentTrack.audioUrl,
+      });
+    }
+  };
+
   if (!currentTrack) return null;
 
   const formatTime = (time: number) => {
@@ -531,10 +554,21 @@ export default function AudioPlayer() {
               aria-label="Volume"
             />
           </div>
-          <button className="group border-border bg-background relative cursor-pointer rounded-lg border p-2.5 transition-all hover:bg-gray-800">
-            <ShoppingCart className="text-primary h-4 w-4" />
+          <button
+            onClick={handleAddToCart}
+            className="group border-border bg-background relative cursor-pointer rounded-lg border p-2.5 transition-all hover:bg-gray-800"
+          >
+            <ShoppingCart
+              className={`h-4 w-4 ${
+                mounted && currentTrack && isInCart(currentTrack.id)
+                  ? "text-green-400"
+                  : "text-primary"
+              }`}
+            />
             <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
-              Add to Cart
+              {mounted && currentTrack && isInCart(currentTrack.id)
+                ? "Remove from Cart"
+                : "Add to Cart"}
             </div>
           </button>
         </div>

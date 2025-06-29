@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Share2, ShoppingCart } from "lucide-react";
 import { usePlayerStore } from "@/lib/playerStore";
+import { useCartStore } from "@/lib/cartStore";
+import { useEffect, useState } from "react";
 
 export type Beat = {
   id: string;
@@ -13,10 +15,34 @@ export type Beat = {
   artUrl: string;
   artist: string;
   audioUrl: string;
+  price: number;
 };
 
 export function BeatsList({ beats }: { beats: Beat[] }) {
   const setTrack = usePlayerStore((state) => state.setTrack);
+  const { addItem, isInCart, removeItem } = useCartStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleAddToCart = (beat: Beat) => {
+    const cartItem = {
+      id: Number(beat.id),
+      title: beat.title,
+      artist: beat.artist,
+      price: beat.price || 9.99, // Default price if not provided
+      cover: beat.artUrl,
+      audioUrl: beat.audioUrl,
+    };
+
+    if (isInCart(Number(beat.id))) {
+      removeItem(Number(beat.id));
+    } else {
+      addItem(cartItem);
+    }
+  };
 
   return (
     <div className="bg-background w-full overflow-x-auto rounded border">
@@ -91,9 +117,18 @@ export function BeatsList({ beats }: { beats: Beat[] }) {
                 </Button>
                 <Button
                   size="sm"
-                  className="hover:bg-primary h-7 cursor-pointer px-3 text-xs font-semibold transition-colors hover:shadow-lg"
+                  className={`h-7 cursor-pointer px-3 text-xs font-semibold transition-colors hover:shadow-lg ${
+                    mounted && isInCart(Number(beat.id))
+                      ? "bg-red-500 text-white hover:bg-red-600"
+                      : "hover:bg-primary"
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToCart(beat);
+                  }}
                 >
-                  <ShoppingCart className="mr-1 h-4 w-4" /> Add
+                  <ShoppingCart className="mr-1 h-4 w-4" />
+                  {mounted && isInCart(Number(beat.id)) ? "Remove" : "Add"}
                 </Button>
               </div>
             </div>
