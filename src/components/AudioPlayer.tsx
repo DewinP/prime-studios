@@ -380,7 +380,7 @@ export default function AudioPlayer() {
   };
 
   return (
-    <div className="bg-card border-border fixed right-0 bottom-0 left-0 z-50 border-t shadow-2xl">
+    <div className="bg-card border-border fixed right-0 bottom-0 left-0 z-50 shadow-2xl">
       {/* Progress Bar as Top Border */}
       <div
         ref={progressRef}
@@ -402,10 +402,7 @@ export default function AudioPlayer() {
         <div className="absolute inset-0 bg-transparent" />
 
         {/* Visible progress bar */}
-        <div
-          className="absolute top-1/2 left-0 w-full -translate-y-1/2 bg-gray-700 transition-all duration-200"
-          style={{ height: isHovering ? "8px" : "4px" }}
-        >
+        <div className="absolute top-1/2 left-0 h-1 w-full -translate-y-1/2 bg-gray-700 transition-all duration-200">
           {/* Progress fill */}
           <div
             className="bg-primary absolute top-0 left-0 h-full transition-all duration-200"
