@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
-import { TRPCReactProvider } from "@/trpc/react";
+import { TRPCProvider } from "@/trpc/react";
 import { Header } from "@/components/header";
 import { Provider } from "jotai";
 import AudioPlayerContainer from "@/components/AudioPlayerContainer";
@@ -28,7 +28,7 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://use.typekit.net/byz4qug.css" />
       </head>
       <body>
-        <TRPCReactProvider>
+        <TRPCProvider>
           <Provider>
             <div className="min-h-screen w-full flex-1 flex-col items-center justify-center">
               <Header />
@@ -38,7 +38,7 @@ export default function RootLayout({
               <AudioPlayerContainer />
             </div>
           </Provider>
-        </TRPCReactProvider>
+        </TRPCProvider>
       </body>
     </html>
   );

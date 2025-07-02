@@ -11,7 +11,6 @@ const beats: Beat[] = [
     artUrl: "https://picsum.photos/seed/beat1/80/80",
     audioUrl: "/bodies.mp3",
     artist: "archive.org",
-    price: 100,
   },
   {
     id: "2",
@@ -21,7 +20,6 @@ const beats: Beat[] = [
     artUrl: "https://picsum.photos/seed/beat2/80/80",
     audioUrl: "/shonci.mp3",
     artist: "prime",
-    price: 100,
   },
 ];
 
