@@ -6,6 +6,7 @@ import {
   publicProcedure,
   protectedAdminRoute,
 } from "@/server/api/trpc";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export const trackRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
@@ -117,7 +118,7 @@ export const trackRouter = createTRPCRouter({
       // Check if user is admin or owns the track
       const track = await ctx.db.track.findUnique({
         where: { id: input.id },
-        select: { userId: true },
+        select: { userId: true, audioUrl: true },
       });
 
       if (!track) {
@@ -134,9 +135,49 @@ export const trackRouter = createTRPCRouter({
         });
       }
 
+      try {
+        // Extract the file path from the audioUrl
+        // The audioUrl is stored as a full public URL like:
+        // https://project.supabase.co/storage/v1/object/public/tracks/userId/filename.mp3
+        const url = new URL(track.audioUrl);
+        const pathParts = url.pathname.split("/");
+
+        console.log("URL pathname:", url.pathname);
+        console.log("Path parts:", pathParts);
+
+        // Find the index of 'tracks' in the path and get everything after it
+        const tracksIndex = pathParts.findIndex((part) => part === "tracks");
+        console.log("Tracks index:", tracksIndex);
+
+        if (tracksIndex !== -1 && tracksIndex < pathParts.length - 1) {
+          const filePath = pathParts.slice(tracksIndex + 1).join("/");
+          console.log("Extracted file path:", filePath);
+
+          if (filePath) {
+            console.log("Attempting to delete file:", filePath);
+            const { error: storageError } = await supabaseServer.storage
+              .from("tracks")
+              .remove([filePath]);
+
+            if (storageError) {
+              console.error("Error deleting file from storage:", storageError);
+            } else {
+              console.log("Successfully deleted file from storage:", filePath);
+            }
+          }
+        } else {
+          console.error(
+            "Could not find 'tracks' in path or invalid path structure",
+          );
+        }
+      } catch (error) {
+        console.error("Error deleting file from storage:", error);
+      }
+
       const deletedTrack = await ctx.db.track.delete({
         where: { id: input.id },
       });
+
       return deletedTrack;
     }),
 });
