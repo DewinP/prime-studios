@@ -31,8 +31,27 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     headers: opts.headers,
   });
 
+  // Get full user data if session exists
+  let user = null;
+  if (session?.user) {
+    user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        emailVerified: true,
+        image: true,
+        isAdmin: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
   return {
     session,
+    user,
     db,
   };
 };
@@ -115,13 +134,14 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (!ctx.session?.user) {
+    if (!ctx.session?.user || !ctx.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
     return next({
       ctx: {
-        // infers the `session` as non-nullable
+        // infers the `session` and `user` as non-nullable
         session: { ...ctx.session, user: ctx.session.user },
+        user: ctx.user,
       },
     });
   });
@@ -130,17 +150,12 @@ export const protectedProcedure = t.procedure
 export const protectedAdminRoute = t.procedure
   .use(timingMiddleware)
   .use(async ({ ctx, next }) => {
-    if (!ctx.session?.user) {
+    if (!ctx.session?.user || !ctx.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
 
     // Check if user is admin
-    const user = await ctx.db.user.findUnique({
-      where: { id: ctx.session.user.id },
-      select: { isAdmin: true },
-    });
-
-    if (!user?.isAdmin) {
+    if (!ctx.user.isAdmin) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Admin access required",
@@ -150,6 +165,7 @@ export const protectedAdminRoute = t.procedure
     return next({
       ctx: {
         session: { ...ctx.session, user: ctx.session.user },
+        user: ctx.user,
       },
     });
   });

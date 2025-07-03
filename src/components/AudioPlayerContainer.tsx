@@ -1,12 +1,12 @@
 import React from "react";
 import AudioPlayer from "./AudioPlayer";
 
-function AidioPlayerContainer() {
+function AudioPlayerContainer() {
   return (
-    <div className="fixed bottom-0 min-w-full bg-amber-400">
+    <div className="fixed bottom-0 min-w-full">
       <AudioPlayer />
     </div>
   );
 }
 
-export default AidioPlayerContainer;
+export default AudioPlayerContainer;

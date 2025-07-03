@@ -1,35 +1,21 @@
-import { HydrateClient } from "@/trpc/server";
-import { BeatsList } from "@/components/beats-list";
-import type { Beat } from "@/components/beats-list";
-
-const beats: Beat[] = [
-  {
-    id: "1",
-    title: "Archive Test",
-    time: "0:30",
-    tags: ["archive", "test"],
-    artUrl: "https://picsum.photos/seed/beat1/80/80",
-    audioUrl: "/bodies.mp3",
-    artist: "archive.org",
-  },
-  {
-    id: "2",
-    title: "Trap Beat",
-    time: "3:12",
-    tags: ["trap", "808"],
-    artUrl: "https://picsum.photos/seed/beat2/80/80",
-    audioUrl: "/shonci.mp3",
-    artist: "prime",
-  },
-];
+import { TrackList } from "@/components/track-list";
+import { api, HydrateClient } from "@/trpc/server";
 
 export default async function Home() {
+  // Fetch tracks server-side
+  const tracks = await api.track.getAll();
+
   return (
     <HydrateClient>
-      <main className="flex min-h-screen flex-col">
+      <main className="mx-auto flex min-h-screen max-w-7xl flex-col overflow-x-hidden px-4 pt-10">
         <div className="w-full">
-          <h1 className="mb-6 py-5 text-3xl font-bold">Tracks</h1>
-          <BeatsList beats={beats} />
+          <h1
+            className="text-gradient-brand mb-8 text-4xl font-bold"
+            style={{ fontFamily: "alfarn-2" }}
+          >
+            TRACKS
+          </h1>
+          <TrackList tracks={tracks} />
         </div>
       </main>
     </HydrateClient>

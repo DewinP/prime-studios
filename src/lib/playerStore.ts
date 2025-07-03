@@ -1,12 +1,11 @@
 import { create } from "zustand";
 
 type Track = {
-  id: number;
-  title: string;
+  id: string;
+  name: string;
   artist: string;
-  collaborator: string;
   duration: string;
-  cover: string;
+  coverUrl: string;
   audioUrl: string;
 };
 

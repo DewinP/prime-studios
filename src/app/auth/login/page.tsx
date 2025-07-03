@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -43,50 +48,60 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="mx-auto max-w-md">
-        <div className="rounded-lg bg-white p-8 shadow">
-          <h1 className="mb-6 text-center text-3xl font-bold text-black">
-            Studio Admin Login
-          </h1>
-          <p className="mb-6 text-center text-sm text-gray-600">
-            Admin access only.
-          </p>
-          {error && (
-            <div className="mb-4 text-center text-red-500">{error}</div>
-          )}
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="mb-1 block font-medium text-black">Email</label>
-              <input
-                type="email"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-black focus:border-transparent focus:ring-2 focus:ring-black focus:outline-none"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="mb-6">
-              <label className="mb-1 block font-medium text-black">
-                Password
-              </label>
-              <input
-                type="password"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-black focus:border-transparent focus:ring-2 focus:ring-black focus:outline-none"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full rounded-lg bg-black py-3 font-medium text-white transition hover:bg-gray-800"
-              disabled={isLoading}
+    <div className="bg-background flex min-h-screen justify-center">
+      <div className="w-full max-w-md">
+        <Card className="shadow-glow bg-card border-border border">
+          <CardHeader>
+            <CardTitle
+              className="text-gradient-brand text-center text-3xl"
+              style={{ fontFamily: "alfarn-2" }}
             >
-              Login
-            </button>
-          </form>
-        </div>
+              Studio Admin Login
+            </CardTitle>
+            <p className="text-muted-foreground mt-2 text-center text-sm">
+              Admin access only.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  className="border-border border"
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  className="border-border border"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  disabled={isLoading}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                Login
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

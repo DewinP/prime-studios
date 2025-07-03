@@ -37,7 +37,19 @@ export const getSession = async () => {
   const session = await auth.api.getSession({
     headers: headersList,
   });
-  return session;
+
+  if (!session) {
+    return null;
+  }
+
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+  });
+
+  return {
+    ...session,
+    user,
+  };
 };
 
 export type Session = typeof auth.$Infer.Session;
