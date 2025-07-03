@@ -11,7 +11,23 @@ function getBaseUrl() {
     // Client-side: use the current origin
     return window.location.origin;
   }
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+
+  // Check for Vercel URL
+  if (process.env.VERCEL_URL) {
+    // Ensure it's a valid URL
+    const vercelUrl = process.env.VERCEL_URL;
+    if (vercelUrl.includes("http")) {
+      return vercelUrl;
+    }
+    return `https://${vercelUrl}`;
+  }
+
+  // Check for custom domain or production URL
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+
+  // Fallback to localhost
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
