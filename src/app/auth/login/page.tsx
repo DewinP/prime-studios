@@ -37,7 +37,8 @@ function LoginForm() {
       if (error) {
         setError(error.message ?? "Login failed");
       } else {
-        router.push("/dashboard");
+        // Perform a hard refresh by redirecting to dashboard
+        window.location.href = "/dashboard";
       }
     } catch (err) {
       console.error(err);
