@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,19 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-function LoginForm() {
+export default function AdminSignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // Check for error parameter
-  const errorParam = searchParams.get("error");
-  if (errorParam === "unauthorized") {
-    setError("Access denied. Admin privileges required.");
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,19 +23,20 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const { error } = await authClient.signIn.email({
+      const { error } = await authClient.signUp.email({
         email,
         password,
+        name,
       });
 
       if (error) {
-        setError(error.message ?? "Login failed");
+        setError(error.message ?? "Signup failed");
       } else {
         router.push("/dashboard");
       }
     } catch (err) {
       console.error(err);
-      setError("Login failed");
+      setError("Signup failed");
     } finally {
       setIsLoading(false);
     }
@@ -56,10 +51,10 @@ function LoginForm() {
               className="text-gradient-brand text-center text-3xl"
               style={{ fontFamily: "alfarn-2" }}
             >
-              Studio Admin Login
+              Studio Admin Signup
             </CardTitle>
             <p className="text-muted-foreground mt-2 text-center text-sm">
-              Admin access only.
+              Create a new admin account for the studio.
             </p>
           </CardHeader>
           <CardContent>
@@ -70,6 +65,19 @@ function LoginForm() {
               </Alert>
             )}
             <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={name}
+                  className="border-border border"
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  autoComplete="name"
+                  disabled={isLoading}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -92,39 +100,25 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   disabled={isLoading}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                Login
+                Create Admin Account
               </Button>
             </form>
             <div className="mt-6 text-center">
               <a
-                href="/auth/signup"
+                href="/auth/login"
                 className="text-muted-foreground hover:text-foreground text-sm transition-colors"
               >
-                Don&apos;t have an account? Sign up
+                Already have an account? Login
               </a>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  );
-}
-
-export default function AdminLoginPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="bg-background flex min-h-screen items-center justify-center">
-          <div className="text-muted-foreground">Loading...</div>
-        </div>
-      }
-    >
-      <LoginForm />
-    </Suspense>
   );
 }

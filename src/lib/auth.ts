@@ -4,6 +4,7 @@ import { db } from "../server/db";
 import { oAuthProxy } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
+import { env } from "@/env";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") {
@@ -30,6 +31,7 @@ export const auth = betterAuth({
   plugins: [nextCookies(), oAuthProxy()],
   baseUrl: `${getBaseUrl()}/api/auth`,
   trustedOrigins: [getBaseUrl()],
+  secret: env.BETTER_AUTH_SECRET,
 });
 
 export const getSession = async () => {

@@ -3,24 +3,27 @@
 import { AdminTrackList } from "@/components/admin-track-list";
 import { UploadTrackModal } from "@/components/upload-track-modal";
 import { Button } from "@/components/ui/button";
-import { useUserAuth } from "@/lib/use-user-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/trpc/react";
 import type { UploadTrackData } from "@/components/upload-track-modal";
 
 export default function DashboardPage() {
-  const { isAuthenticated, isLoading, user } = useUserAuth();
   const router = useRouter();
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const utils = api.useUtils();
 
-  // Redirect to login if not authenticated
+  // Get session with user data
+  const { data: sessionWithUser, isLoading } =
+    api.auth.getSessionWithUser.useQuery();
+
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  // Redirect if not admin
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !sessionWithUser?.user?.isAdmin) {
       router.push("/auth/login");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [sessionWithUser, isLoading, router]);
 
   const handleUploadTrack = async (trackData: UploadTrackData) => {
     try {
@@ -38,14 +41,14 @@ export default function DashboardPage() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="bg-gradient-dark min-h-screen p-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="bg-muted h-8 w-64 animate-pulse rounded" />
-          <div className="bg-muted mt-4 h-4 w-96 animate-pulse rounded" />
-        </div>
+      <div className="mx-auto max-w-7xl px-4 pt-10">
+        <div className="bg-muted h-8 w-64 animate-pulse rounded" />
+        <div className="bg-muted mt-4 h-4 w-96 animate-pulse rounded" />
       </div>
     );
   }
+
+  const user = sessionWithUser?.user;
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-10">
