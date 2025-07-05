@@ -12,9 +12,7 @@ function getBaseUrl() {
     return window.location.origin;
   }
 
-  // Check for Vercel URL
   if (process.env.VERCEL_URL) {
-    // Ensure it's a valid URL
     const vercelUrl = process.env.VERCEL_URL;
     if (vercelUrl.includes("http")) {
       return vercelUrl;

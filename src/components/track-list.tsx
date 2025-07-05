@@ -2,8 +2,17 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Share2, Play, Pause, Clock, User } from "lucide-react";
+import {
+  Share2,
+  Play,
+  Pause,
+  Clock,
+  User,
+  ShoppingCart,
+  Check,
+} from "lucide-react";
 import { usePlayerStore } from "@/lib/playerStore";
+import { useCartStore } from "@/lib/cartStore";
 import type { RouterOutputs } from "@/trpc/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,6 +23,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
+import { useState } from "react";
 
 type Track = RouterOutputs["track"]["getAll"][number];
 
@@ -21,8 +33,66 @@ interface TrackListProps {
   tracks: Track[];
 }
 
+function LicenseSelectModal({
+  open,
+  onClose,
+  prices,
+  onSelect,
+}: {
+  open: boolean;
+  onClose: () => void;
+  prices: { licenseType: string; price: number; stripePriceId: string }[];
+  onSelect: (license: {
+    licenseType: string;
+    price: number;
+    stripePriceId: string;
+  }) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-card border-border max-w-lg">
+        <DialogTitle className="text-foreground mb-4 text-center text-xl font-bold">
+          Select a License
+        </DialogTitle>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {prices.map((p) => (
+            <Card
+              key={p.licenseType}
+              className="group bg-background hover:border-primary hover:bg-primary/10 cursor-pointer border-2 border-transparent p-6 text-center shadow transition-all"
+              onClick={() => {
+                onSelect(p);
+                onClose();
+              }}
+            >
+              <div className="text-primary mb-2 text-xs font-semibold tracking-widest uppercase">
+                {p.licenseType.replace(/_/g, " ")}
+              </div>
+              <div className="text-foreground mb-1 text-3xl font-extrabold">
+                ${(p.price / 100).toFixed(2)}
+              </div>
+              <div className="text-muted-foreground text-xs">
+                Instant Download
+              </div>
+            </Card>
+          ))}
+        </div>
+        <div className="mt-6 text-center">
+          <Button variant="secondary" className="w-full" onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function TrackList({ tracks }: TrackListProps) {
   const { currentTrack, isPlaying, setTrack, setIsPlaying } = usePlayerStore();
+  const { addItem, items: cartItems } = useCartStore();
+  const [licenseModal, setLicenseModal] = useState<{
+    open: boolean;
+    track: Track | null;
+  }>({ open: false, track: null });
 
   const handleTrackClick = (track: Track) => {
     // If clicking the same track, toggle play/pause
@@ -268,6 +338,7 @@ export function TrackList({ tracks }: TrackListProps) {
                     <motion.div
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
+                      className="flex justify-end gap-2"
                     >
                       <Button
                         size="icon"
@@ -282,6 +353,59 @@ export function TrackList({ tracks }: TrackListProps) {
                       >
                         <Share2 className="h-3 w-3" />
                       </Button>
+                      {/* Cart Button */}
+                      {(() => {
+                        const trackCartItems = cartItems.filter(
+                          (item) => item.trackId === track.id,
+                        );
+                        const isInCart = trackCartItems.length > 0;
+                        const selectedLicense = trackCartItems[0]?.licenseType;
+
+                        return (
+                          <div className="relative">
+                            <Button
+                              size="icon"
+                              variant={isInCart ? "default" : "ghost"}
+                              className={`h-8 w-8 rounded-full border transition-all duration-200 ${
+                                isInCart
+                                  ? "bg-primary border-primary text-primary-foreground hover:bg-primary/90"
+                                  : "text-muted-foreground hover:text-foreground border-white/20 bg-white/10 hover:border-white/40 hover:bg-white/20"
+                              }`}
+                              aria-label={
+                                isInCart ? "Remove from Cart" : "Add to Cart"
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const prices = track.prices || [];
+                                if (prices.length === 1) {
+                                  useCartStore.getState().addItem({
+                                    trackId: track.id,
+                                    trackName: track.name,
+                                    artist: track.artist,
+                                    licenseType: prices[0].licenseType,
+                                    price: prices[0].price,
+                                    stripePriceId: prices[0].stripePriceId,
+                                    coverUrl: track.coverUrl,
+                                  });
+                                } else if (prices.length > 1) {
+                                  setLicenseModal({ open: true, track });
+                                }
+                              }}
+                            >
+                              {isInCart ? (
+                                <Check className="h-4 w-4" />
+                              ) : (
+                                <ShoppingCart className="h-4 w-4" />
+                              )}
+                            </Button>
+                            {isInCart && selectedLicense && (
+                              <div className="text-primary absolute right-0 -bottom-6 text-xs font-medium whitespace-nowrap">
+                                ${(trackCartItems[0].price / 100).toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </motion.div>
                   </TableCell>
                 </motion.tr>
@@ -290,6 +414,25 @@ export function TrackList({ tracks }: TrackListProps) {
           </AnimatePresence>
         </TableBody>
       </Table>
+      {/* License Select Modal */}
+      {licenseModal.open && licenseModal.track && (
+        <LicenseSelectModal
+          open={licenseModal.open}
+          onClose={() => setLicenseModal({ open: false, track: null })}
+          prices={licenseModal.track.prices || []}
+          onSelect={(selected) => {
+            useCartStore.getState().addItem({
+              trackId: licenseModal.track!.id,
+              trackName: licenseModal.track!.name,
+              artist: licenseModal.track!.artist,
+              licenseType: selected.licenseType,
+              price: selected.price,
+              stripePriceId: selected.stripePriceId,
+              coverUrl: licenseModal.track!.coverUrl,
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

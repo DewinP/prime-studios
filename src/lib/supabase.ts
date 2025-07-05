@@ -65,7 +65,6 @@ export async function uploadFile(
   }
 }
 
-// Helper function to delete file
 export async function deleteFile(
   bucket: string,
   path: string,

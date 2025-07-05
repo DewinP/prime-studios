@@ -12,7 +12,7 @@ datasource db {
 }
 
 model Track {
-  id          String   @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
   artist      String
   description String?
@@ -27,7 +27,21 @@ model Track {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  stripeProductId String?
+  prices      TrackPrice[]
+
   @@map("tracks")
+}
+
+model TrackPrice {
+  id            String   @id @default(uuid())
+  trackId       String
+  track         Track    @relation(fields: [trackId], references: [id])
+  licenseType   String   // e.g., "mp3_lease", "wav_lease", etc.
+  price         Int      // in cents
+  stripePriceId String   // Stripe Price ID
+
+  @@map("track_prices")
 }
 
 model User {
@@ -43,6 +57,7 @@ model User {
   accounts      Account[]
 
   tracks Track[]
+  payments Payment[]
 
   @@unique([email])
   @@map("users")
@@ -91,4 +106,22 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
+}
+
+model Payment {
+  id              String    @id @default(uuid())
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeSessionId String    // Required: always set on creation
+  stripePaymentId String?   @unique // Nullable: set after payment
+  stripeProductId String
+  amount          Int       // Amount in cents
+  currency        String    @default("usd")
+  status          String    @default("pending") // pending, succeeded, failed, canceled
+  description     String?
+  metadata        Json?     // Additional metadata
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("payments")
 }

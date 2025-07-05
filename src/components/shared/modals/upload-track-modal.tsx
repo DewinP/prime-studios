@@ -40,7 +40,17 @@ export interface UploadTrackData {
   duration: number;
   audioUrl?: string;
   signedUrl?: string;
+  prices: { licenseType: string; price: number }[];
 }
+
+// Add license options
+const LICENSE_OPTIONS = [
+  { label: "MP3 Lease", value: "mp3_lease" },
+  { label: "WAV Lease", value: "wav_lease" },
+  { label: "WAV Trackout Lease", value: "wav_trackout_lease" },
+  { label: "Unlimited Lease", value: "unlimited_lease" },
+  { label: "Exclusive", value: "exclusive" },
+];
 
 export function UploadTrackModal({
   isOpen,
@@ -64,10 +74,16 @@ export function UploadTrackModal({
     status: "draft",
     audioFile: null,
     duration: 0,
+    prices: [{ licenseType: "mp3_lease", price: 0 }],
   });
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Add state for prices
+  const [prices, setPrices] = useState([
+    { licenseType: "mp3_lease", price: 0 }, // price is stored in cents
+  ]);
 
   const handleAudioFileChange = (file: File) => {
     setFormData({ ...formData, audioFile: file });
@@ -95,6 +111,24 @@ export function UploadTrackModal({
       setFormData((prev) => ({ ...prev, duration: durationInSeconds }));
       URL.revokeObjectURL(objectUrl);
     };
+  };
+
+  const handlePriceChange = (
+    index: number,
+    field: string,
+    value: string | number,
+  ) => {
+    setPrices((prev) =>
+      prev.map((p, i) => (i === index ? { ...p, [field]: value } : p)),
+    );
+  };
+
+  const handleAddPrice = () => {
+    setPrices((prev) => [...prev, { licenseType: "mp3_lease", price: 0 }]); // price is stored in cents
+  };
+
+  const handleRemovePrice = (index: number) => {
+    setPrices((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -139,6 +173,10 @@ export function UploadTrackModal({
         duration: formData.duration,
         audioUrl: `${supabase.storage.from("tracks").getPublicUrl(uploadResult.url).data.publicUrl}`,
         status: formData.status as "draft" | "published",
+        prices: prices.map((p) => ({
+          licenseType: p.licenseType,
+          price: Number(p.price),
+        })),
       };
 
       const createdTrack = await createTrackMutation.mutateAsync(trackData);
@@ -168,6 +206,7 @@ export function UploadTrackModal({
       status: "draft",
       audioFile: null,
       duration: 0,
+      prices: [{ licenseType: "mp3_lease", price: 0 }],
     });
     setUploadError(null);
     onOpenChange(false);
@@ -293,6 +332,66 @@ export function UploadTrackModal({
               {(formData.duration % 60).toString().padStart(2, "0")}
             </div>
           )}
+
+          {/* Price Options */}
+          <div>
+            <Label className="text-foreground">Price Options *</Label>
+            <div className="space-y-2">
+              {prices.map((p, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Select
+                    value={p.licenseType}
+                    onValueChange={(val) =>
+                      handlePriceChange(i, "licenseType", val)
+                    }
+                  >
+                    <SelectTrigger className="bg-background border-border text-foreground w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {LICENSE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={(p.price / 100).toFixed(2)}
+                    onChange={(e) => {
+                      const dollarAmount = parseFloat(e.target.value) || 0;
+                      const centsAmount = Math.round(dollarAmount * 100);
+                      handlePriceChange(i, "price", centsAmount);
+                    }}
+                    className="bg-background border-border text-foreground w-28"
+                    placeholder="Price ($)"
+                    required
+                  />
+                  {prices.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleRemovePrice(i)}
+                    >
+                      ×
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddPrice}
+                className="mt-2"
+              >
+                + Add Price Option
+              </Button>
+            </div>
+          </div>
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-2 pt-4">

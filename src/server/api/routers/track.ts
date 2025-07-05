@@ -7,18 +7,21 @@ import {
   protectedAdminRoute,
 } from "@/server/api/trpc";
 import { supabaseServer } from "@/lib/supabase-server";
+import { stripe } from "@/lib/stripe";
 
 export const trackRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
     return await ctx.db.track.findMany({
       orderBy: { createdAt: "desc" },
       where: { status: "published" },
+      include: { prices: true },
     });
   }),
 
   getAllByAdmin: protectedAdminRoute.query(async ({ ctx }) => {
     return await ctx.db.track.findMany({
       orderBy: { createdAt: "desc" },
+      include: { prices: true },
     });
   }),
 
@@ -27,6 +30,7 @@ export const trackRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const track = await ctx.db.track.findUnique({
         where: { id: input.id },
+        include: { prices: true },
       });
 
       if (!track) {
@@ -39,6 +43,24 @@ export const trackRouter = createTRPCRouter({
       return track;
     }),
 
+  getPricesById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const track = await ctx.db.track.findUnique({
+        where: { id: input.id },
+        include: { prices: true },
+      });
+
+      if (!track) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Track not found",
+        });
+      }
+
+      return track.prices;
+    }),
+
   create: protectedProcedure
     .input(
       z.object({
@@ -49,10 +71,17 @@ export const trackRouter = createTRPCRouter({
         audioUrl: z.string().url(),
         coverUrl: z.string().url().optional(),
         status: z.enum(["draft", "published"]).default("draft"),
+        prices: z
+          .array(
+            z.object({
+              licenseType: z.string().min(1),
+              price: z.number().min(0),
+            }),
+          )
+          .min(1),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if user is admin (using context user data)
       if (!ctx.user.isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -60,11 +89,49 @@ export const trackRouter = createTRPCRouter({
         });
       }
 
+      // Create Stripe product
+      const product = await stripe.products.create({
+        name: input.name,
+        description: input.description,
+        metadata: {
+          artist: input.artist,
+        },
+      });
+
+      // Create Stripe prices for each license type
+      const trackPrices = await Promise.all(
+        input.prices.map(async (p) => {
+          const price = await stripe.prices.create({
+            product: product.id,
+            unit_amount: p.price,
+            currency: "usd",
+            metadata: { licenseType: p.licenseType },
+          });
+          return {
+            licenseType: p.licenseType,
+            price: p.price,
+            stripePriceId: price.id,
+          };
+        }),
+      );
+
+      // Create the track and associated prices in the DB
       const track = await ctx.db.track.create({
         data: {
-          ...input,
+          name: input.name,
+          artist: input.artist,
+          description: input.description,
+          duration: input.duration,
+          audioUrl: input.audioUrl,
+          coverUrl: input.coverUrl,
+          status: input.status,
           userId: ctx.user.id,
+          stripeProductId: product.id,
+          prices: {
+            create: trackPrices,
+          },
         },
+        include: { prices: true },
       });
       return track;
     }),
@@ -80,15 +147,24 @@ export const trackRouter = createTRPCRouter({
         audioUrl: z.string().url().optional(),
         coverUrl: z.string().url().optional(),
         status: z.enum(["draft", "published"]).optional(),
+        prices: z
+          .array(
+            z.object({
+              id: z.string().optional(), // present if existing
+              licenseType: z.string().min(1),
+              price: z.number().min(0),
+            }),
+          )
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...data } = input;
+      const { id, prices, ...data } = input;
 
       // Check if user is admin or owns the track
       const track = await ctx.db.track.findUnique({
         where: { id },
-        select: { userId: true },
+        include: { prices: true },
       });
 
       if (!track) {
@@ -105,9 +181,74 @@ export const trackRouter = createTRPCRouter({
         });
       }
 
+      // Handle price updates if provided
+      if (prices) {
+        // 1. Update existing prices
+        for (const p of prices) {
+          if (p.id) {
+            // Find the existing price
+            const existing = track.prices.find((tp) => tp.id === p.id);
+            if (existing && existing.price !== p.price) {
+              // Update Stripe price (archive old, create new)
+              await stripe.prices.update(existing.stripePriceId, {
+                active: false,
+              });
+              const newStripePrice = await stripe.prices.create({
+                product: track.stripeProductId!,
+                unit_amount: p.price,
+                currency: "usd",
+                metadata: { licenseType: p.licenseType },
+              });
+              // Update DB: replace old price with new
+              await ctx.db.trackPrice.update({
+                where: { id: p.id },
+                data: {
+                  price: p.price,
+                  stripePriceId: newStripePrice.id,
+                  licenseType: p.licenseType,
+                },
+              });
+            } else if (existing && existing.licenseType !== p.licenseType) {
+              // Only license type changed
+              await ctx.db.trackPrice.update({
+                where: { id: p.id },
+                data: { licenseType: p.licenseType },
+              });
+            }
+          } else {
+            // 2. Add new price
+            const newStripePrice = await stripe.prices.create({
+              product: track.stripeProductId!,
+              unit_amount: p.price,
+              currency: "usd",
+              metadata: { licenseType: p.licenseType },
+            });
+            await ctx.db.trackPrice.create({
+              data: {
+                trackId: track.id,
+                licenseType: p.licenseType,
+                price: p.price,
+                stripePriceId: newStripePrice.id,
+              },
+            });
+          }
+        }
+        // 3. Remove deleted prices
+        const updatedIds = prices.filter((p) => p.id).map((p) => p.id);
+        for (const old of track.prices) {
+          if (!updatedIds.includes(old.id)) {
+            // Archive Stripe price
+            await stripe.prices.update(old.stripePriceId, { active: false });
+            // Remove from DB
+            await ctx.db.trackPrice.delete({ where: { id: old.id } });
+          }
+        }
+      }
+
       const updatedTrack = await ctx.db.track.update({
         where: { id },
         data,
+        include: { prices: true },
       });
       return updatedTrack;
     }),

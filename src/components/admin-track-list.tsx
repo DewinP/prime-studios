@@ -49,6 +49,15 @@ import {
 
 type Track = RouterOutputs["track"]["getAllByAdmin"][number];
 
+// Add license options
+const LICENSE_OPTIONS = [
+  { label: "MP3 Lease", value: "mp3_lease" },
+  { label: "WAV Lease", value: "wav_lease" },
+  { label: "WAV Trackout Lease", value: "wav_trackout_lease" },
+  { label: "Unlimited Lease", value: "unlimited_lease" },
+  { label: "Exclusive", value: "exclusive" },
+];
+
 export function AdminTrackList() {
   const { currentTrack, isPlaying, setTrack, setIsPlaying } = usePlayerStore();
   const utils = api.useUtils();
@@ -64,6 +73,11 @@ export function AdminTrackList() {
   // State for delete
   const [deletingTrack, setDeletingTrack] = useState<Track | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+  // Add license options
+  const [editPrices, setEditPrices] = useState<
+    { id?: string; licenseType: string; price: number }[]
+  >([]);
 
   // Fetch all tracks using admin query (includes drafts and published)
   const {
@@ -111,7 +125,32 @@ export function AdminTrackList() {
       name: track.name,
       status: track.status as "draft" | "published",
     });
+    setEditPrices(
+      track.prices?.map((p) => ({
+        id: p.id,
+        licenseType: p.licenseType,
+        price: p.price,
+      })) || [],
+    );
     setIsEditModalOpen(true);
+  };
+
+  const handleEditPriceChange = (
+    index: number,
+    field: string,
+    value: string | number,
+  ) => {
+    setEditPrices((prev) =>
+      prev.map((p, i) => (i === index ? { ...p, [field]: value } : p)),
+    );
+  };
+
+  const handleAddEditPrice = () => {
+    setEditPrices((prev) => [...prev, { licenseType: "mp3_lease", price: 0 }]); // price is stored in cents
+  };
+
+  const handleRemoveEditPrice = (index: number) => {
+    setEditPrices((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveEdit = () => {
@@ -120,6 +159,7 @@ export function AdminTrackList() {
       id: editingTrack.id,
       name: editForm.name,
       status: editForm.status,
+      prices: editPrices,
     });
   };
 
@@ -280,6 +320,66 @@ export function AdminTrackList() {
                       <SelectItem value="published">Published</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                {/* Price Options */}
+                <div>
+                  <Label className="text-foreground">Price Options *</Label>
+                  <div className="space-y-2">
+                    {editPrices.map((p, i) => (
+                      <div key={p.id || i} className="flex items-center gap-2">
+                        <Select
+                          value={p.licenseType}
+                          onValueChange={(val) =>
+                            handleEditPriceChange(i, "licenseType", val)
+                          }
+                        >
+                          <SelectTrigger className="bg-background border-border text-foreground w-40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            {LICENSE_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={(p.price / 100).toFixed(2)}
+                          onChange={(e) => {
+                            const dollarAmount =
+                              parseFloat(e.target.value) || 0;
+                            const centsAmount = Math.round(dollarAmount * 100);
+                            handleEditPriceChange(i, "price", centsAmount);
+                          }}
+                          className="bg-background border-border text-foreground w-28"
+                          placeholder="Price ($)"
+                          required
+                        />
+                        {editPrices.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => handleRemoveEditPrice(i)}
+                          >
+                            ×
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddEditPrice}
+                      className="mt-2"
+                    >
+                      + Add Price Option
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button

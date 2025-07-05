@@ -26,8 +26,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UploadTrackModal } from "./upload-track-modal";
-import type { UploadTrackData } from "./upload-track-modal";
+import { UploadTrackModal } from "@/components/shared/modals/upload-track-modal";
+import type { UploadTrackData } from "@/components/shared/modals/upload-track-modal";
 import { useUserAuth } from "@/lib/use-user-auth";
 import { api } from "@/trpc/react";
 

@@ -4,11 +4,11 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
 import { TRPCProvider } from "@/trpc/react";
-import { Header } from "@/components/header";
-import { Provider } from "jotai";
-import AudioPlayerContainer from "@/components/AudioPlayerContainer";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Header } from "@/components/shared/nav/header";
+import AudioPlayerContainer from "@/components/shared/audio/AudioPlayerContainer";
+import { ThemeProvider } from "@/components/shared/theme/theme-provider";
 import { AuthProvider } from "@/lib/auth-context";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Prime Studios",
@@ -36,19 +36,18 @@ export default function RootLayout({
       <body className="bg-background text-foreground antialiased">
         <ThemeProvider>
           <TRPCProvider>
-            <Provider>
-              <AuthProvider>
-                <div className="bg-gradient-dark min-h-screen w-full flex-1 flex-col items-center justify-center">
-                  <Header />
-                  <div className="supports-[backdrop-filter]:bg-background/60 from-background/80 to-background-secondary overflow-y-hidden bg-gradient-to-b">
-                    <main className="mx-auto h-full max-w-7xl px-4 py-6">
-                      {children}
-                    </main>
-                  </div>
-                  <AudioPlayerContainer />
+            <AuthProvider>
+              <div className="bg-gradient-dark min-h-screen w-full flex-1 flex-col items-center justify-center">
+                <Header />
+                <div className="supports-[backdrop-filter]:bg-background/60 from-background/80 to-background-secondary overflow-y-hidden bg-gradient-to-b">
+                  <main className="mx-auto h-full max-w-7xl px-4 py-6">
+                    {children}
+                  </main>
                 </div>
-              </AuthProvider>
-            </Provider>
+                <AudioPlayerContainer />
+              </div>
+              <Toaster />
+            </AuthProvider>
           </TRPCProvider>
         </ThemeProvider>
       </body>
