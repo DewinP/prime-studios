@@ -2,15 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Share2,
-  Play,
-  Pause,
-  Clock,
-  User,
-  ShoppingCart,
-  Check,
-} from "lucide-react";
+import { Play, Pause, Clock, User, ShoppingCart, Check } from "lucide-react";
 import { usePlayerStore } from "@/lib/playerStore";
 import { useCartStore } from "@/lib/cartStore";
 import type { RouterOutputs } from "@/trpc/react";
@@ -26,6 +18,12 @@ import {
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Track = RouterOutputs["track"]["getAll"][number];
 
@@ -88,7 +86,7 @@ function LicenseSelectModal({
 
 export function TrackList({ tracks }: TrackListProps) {
   const { currentTrack, isPlaying, setTrack, setIsPlaying } = usePlayerStore();
-  const { addItem, items: cartItems } = useCartStore();
+  const { addItem, removeItem, items: cartItems } = useCartStore();
   const [licenseModal, setLicenseModal] = useState<{
     open: boolean;
     track: Track | null;
@@ -148,291 +146,297 @@ export function TrackList({ tracks }: TrackListProps) {
   }
 
   return (
-    <div className="space-y-4 overflow-x-hidden">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
-      >
-        <h2
-          className="text-foreground mb-2 text-2xl font-bold"
-          style={{ fontFamily: "alfarn-2" }}
+    <TooltipProvider>
+      <div className="space-y-4 overflow-x-hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
         >
-          {tracks.length} Tracks Available
-        </h2>
-        <div className="h-1 w-20 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500" />
-      </motion.div>
+          <h2
+            className="text-foreground mb-2 text-2xl font-bold"
+            style={{ fontFamily: "alfarn-2" }}
+          >
+            {tracks.length} Tracks Available
+          </h2>
+          <div className="h-1 w-20 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500" />
+        </motion.div>
 
-      <Table className="w-full table-fixed overflow-hidden rounded-xl border-white/10">
-        <TableHeader className="border-white/10 bg-white/5 transition-colors hover:bg-white/10">
-          <TableRow>
-            <TableHead className="text-muted-foreground w-12 font-semibold">
-              #
-            </TableHead>
-            <TableHead className="text-muted-foreground font-semibold">
-              Track
-            </TableHead>
-            <TableHead className="text-muted-foreground font-semibold">
-              Artist
-            </TableHead>
-            <TableHead className="text-muted-foreground font-semibold">
-              Duration
-            </TableHead>
-            <TableHead className="text-muted-foreground font-semibold">
-              Tags
-            </TableHead>
-            <TableHead className="text-muted-foreground w-16 text-right font-semibold"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody className="overflow-hidden">
-          <AnimatePresence>
-            {tracks.map((track, index) => {
-              const isCurrentTrack = currentTrack?.id === track.id;
-              const isTrackPlaying = isCurrentTrack && isPlaying;
+        <Table className="w-full table-fixed overflow-hidden rounded-xl border-white/10">
+          <TableHeader className="border-white/10 bg-white/5 transition-colors hover:bg-white/10">
+            <TableRow>
+              <TableHead className="text-muted-foreground w-12 font-semibold">
+                #
+              </TableHead>
+              <TableHead className="text-muted-foreground font-semibold">
+                Track
+              </TableHead>
+              <TableHead className="text-muted-foreground font-semibold">
+                Artist
+              </TableHead>
+              <TableHead className="text-muted-foreground font-semibold">
+                Duration
+              </TableHead>
+              <TableHead className="text-muted-foreground font-semibold">
+                Tags
+              </TableHead>
+              <TableHead className="text-muted-foreground w-16 text-right font-semibold"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="overflow-hidden">
+            <AnimatePresence>
+              {tracks.map((track, index) => {
+                const isCurrentTrack = currentTrack?.id === track.id;
+                const isTrackPlaying = isCurrentTrack && isPlaying;
 
-              return (
-                <motion.tr
-                  key={track.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{
-                    duration: 0.3,
-                    delay: index * 0.05,
-                    ease: "easeOut",
-                  }}
-                  className={`group cursor-pointer border border-white/5 transition-all duration-300 ${
-                    isCurrentTrack ? "selected" : ""
-                  }`}
-                  onClick={() => handleTrackClick(track)}
-                >
-                  {/* Track Number */}
-                  <TableCell className="text-muted-foreground p-5 font-medium">
-                    <motion.div
-                      className="flex items-center justify-center"
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <span className="text-sm">{index + 1}</span>
-                    </motion.div>
-                  </TableCell>
-
-                  {/* Track Info */}
-                  <TableCell className="overflow-x-hidden pl-6 font-medium">
-                    <div className="flex items-center space-x-3">
-                      {/* Cover Art */}
+                return (
+                  <motion.tr
+                    key={track.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{
+                      duration: 0.3,
+                      delay: index * 0.05,
+                      ease: "easeOut",
+                    }}
+                    className={`group cursor-pointer border border-white/5 transition-all duration-300 ${
+                      isCurrentTrack ? "selected" : ""
+                    }`}
+                    onClick={() => handleTrackClick(track)}
+                  >
+                    {/* Track Number */}
+                    <TableCell className="text-muted-foreground p-5 font-medium">
                       <motion.div
-                        className="relative flex-shrink-0"
-                        whileHover={{ rotate: 5, scale: 1.05 }}
+                        className="flex items-center justify-center"
+                        whileHover={{ scale: 1.1 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <div className="relative h-10 w-10 overflow-hidden rounded-lg border border-white/20 shadow-md">
-                          <img
-                            src={track.coverUrl ?? "/logo.png"}
-                            alt={track.name}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                          />
-                          {isCurrentTrack && isTrackPlaying && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-                            >
-                              <motion.div
-                                animate={{
-                                  rotate: 360,
-                                }}
-                                transition={{
-                                  duration: 2,
-                                  repeat: Infinity,
-                                  ease: "linear",
-                                }}
-                              >
-                                {isTrackPlaying ? (
-                                  <Pause className="h-4 w-4 text-white" />
-                                ) : (
-                                  <Play className="ml-0.5 h-4 w-4 text-white" />
-                                )}
-                              </motion.div>
-                            </motion.div>
-                          )}
-                        </div>
-
-                        {/* Pulse animation for current track */}
-                        {isCurrentTrack && (
-                          <motion.div
-                            className="absolute inset-0 rounded-lg border-2 border-yellow-500/30"
-                            animate={{ scale: [1, 1.1, 1] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          />
-                        )}
+                        <span className="text-sm">{index + 1}</span>
                       </motion.div>
+                    </TableCell>
 
-                      {/* Title and Description */}
-                      <div className="min-w-0 flex-1">
+                    {/* Track Info */}
+                    <TableCell className="overflow-x-hidden pl-6 font-medium">
+                      <div className="flex items-center space-x-3">
+                        {/* Cover Art */}
                         <motion.div
-                          className="text-foreground truncate font-medium"
-                          style={{ fontFamily: "alfarn-2" }}
-                          whileHover={{ x: 3 }}
+                          className="relative flex-shrink-0"
+                          whileHover={{ rotate: 5, scale: 1.05 }}
                           transition={{ duration: 0.2 }}
                         >
-                          {track.name}
-                        </motion.div>
-                        {track.description && (
-                          <div className="text-muted-foreground/70 truncate text-xs">
-                            {track.description}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  {/* Artist */}
-                  <TableCell className="text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <User className="h-3 w-3" />
-                      <span className="text-sm">{track.artist}</span>
-                    </div>
-                  </TableCell>
-
-                  {/* Duration */}
-                  <TableCell className="text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="h-3 w-3" />
-                      <span className="text-sm">
-                        {formatDuration(track.duration)}
-                      </span>
-                    </div>
-                  </TableCell>
-
-                  {/* Tags */}
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Badge
-                          variant="secondary"
-                          className="border-gray-500/30 bg-gray-500/10 text-xs text-gray-300 transition-colors hover:bg-gray-500/20"
-                        >
-                          Hip Hop
-                        </Badge>
-                      </motion.div>
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Badge
-                          variant="outline"
-                          className="border-blue-500/30 bg-blue-500/10 text-xs text-blue-300 transition-colors hover:bg-blue-500/20"
-                        >
-                          Trap
-                        </Badge>
-                      </motion.div>
-                    </div>
-                  </TableCell>
-
-                  {/* Actions */}
-                  <TableCell className="pr-6 text-right">
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex justify-end gap-2"
-                    >
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-foreground h-8 w-8 rounded-full border border-white/20 bg-white/10 transition-all duration-200 hover:border-white/40 hover:bg-white/20"
-                        aria-label="Share"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // TODO: Implement share functionality
-                          console.log("Share track:", track.id);
-                        }}
-                      >
-                        <Share2 className="h-3 w-3" />
-                      </Button>
-                      {/* Cart Button */}
-                      {(() => {
-                        const trackCartItems = cartItems.filter(
-                          (item) => item.trackId === track.id,
-                        );
-                        const isInCart = trackCartItems.length > 0;
-                        const selectedLicense = trackCartItems[0]?.licenseType;
-
-                        return (
-                          <div className="relative">
-                            <Button
-                              size="icon"
-                              variant={isInCart ? "default" : "ghost"}
-                              className={`h-8 w-8 rounded-full border transition-all duration-200 ${
-                                isInCart
-                                  ? "bg-primary border-primary text-primary-foreground hover:bg-primary/90"
-                                  : "text-muted-foreground hover:text-foreground border-white/20 bg-white/10 hover:border-white/40 hover:bg-white/20"
-                              }`}
-                              aria-label={
-                                isInCart ? "Remove from Cart" : "Add to Cart"
-                              }
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const prices = track.prices || [];
-                                if (prices.length === 1) {
-                                  useCartStore.getState().addItem({
-                                    trackId: track.id,
-                                    trackName: track.name,
-                                    artist: track.artist,
-                                    licenseType: prices[0].licenseType,
-                                    price: prices[0].price,
-                                    stripePriceId: prices[0].stripePriceId,
-                                    coverUrl: track.coverUrl,
-                                  });
-                                } else if (prices.length > 1) {
-                                  setLicenseModal({ open: true, track });
-                                }
-                              }}
-                            >
-                              {isInCart ? (
-                                <Check className="h-4 w-4" />
-                              ) : (
-                                <ShoppingCart className="h-4 w-4" />
-                              )}
-                            </Button>
-                            {isInCart && selectedLicense && (
-                              <div className="text-primary absolute right-0 -bottom-6 text-xs font-medium whitespace-nowrap">
-                                ${(trackCartItems[0].price / 100).toFixed(2)}
-                              </div>
+                          <div className="relative h-10 w-10 overflow-hidden rounded-lg border border-white/20 shadow-md">
+                            <img
+                              src={track.coverUrl ?? "/logo.png"}
+                              alt={track.name}
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            />
+                            {isCurrentTrack && isTrackPlaying && (
+                              <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                              >
+                                <motion.div
+                                  animate={{
+                                    rotate: 360,
+                                  }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    ease: "linear",
+                                  }}
+                                >
+                                  {isTrackPlaying ? (
+                                    <Pause className="h-4 w-4 text-white" />
+                                  ) : (
+                                    <Play className="ml-0.5 h-4 w-4 text-white" />
+                                  )}
+                                </motion.div>
+                              </motion.div>
                             )}
                           </div>
-                        );
-                      })()}
-                    </motion.div>
-                  </TableCell>
-                </motion.tr>
-              );
-            })}
-          </AnimatePresence>
-        </TableBody>
-      </Table>
-      {/* License Select Modal */}
-      {licenseModal.open && licenseModal.track && (
-        <LicenseSelectModal
-          open={licenseModal.open}
-          onClose={() => setLicenseModal({ open: false, track: null })}
-          prices={licenseModal.track.prices || []}
-          onSelect={(selected) => {
-            useCartStore.getState().addItem({
-              trackId: licenseModal.track!.id,
-              trackName: licenseModal.track!.name,
-              artist: licenseModal.track!.artist,
-              licenseType: selected.licenseType,
-              price: selected.price,
-              stripePriceId: selected.stripePriceId,
-              coverUrl: licenseModal.track!.coverUrl,
-            });
-          }}
-        />
-      )}
-    </div>
+
+                          {/* Pulse animation for current track */}
+                          {isCurrentTrack && (
+                            <motion.div
+                              className="absolute inset-0 rounded-lg border-2 border-yellow-500/30"
+                              animate={{ scale: [1, 1.1, 1] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                            />
+                          )}
+                        </motion.div>
+
+                        {/* Title and Description */}
+                        <div className="min-w-0 flex-1">
+                          <motion.div
+                            className="text-foreground truncate font-medium"
+                            style={{ fontFamily: "alfarn-2" }}
+                            whileHover={{ x: 3 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            {track.name}
+                          </motion.div>
+                          {track.description && (
+                            <div className="text-muted-foreground/70 truncate text-xs">
+                              {track.description}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Artist */}
+                    <TableCell className="text-muted-foreground">
+                      <div className="flex items-center space-x-1">
+                        <User className="h-3 w-3" />
+                        <span className="text-sm">{track.artist}</span>
+                      </div>
+                    </TableCell>
+
+                    {/* Duration */}
+                    <TableCell className="text-muted-foreground">
+                      <div className="flex items-center space-x-1">
+                        <Clock className="h-3 w-3" />
+                        <span className="text-sm">
+                          {formatDuration(track.duration)}
+                        </span>
+                      </div>
+                    </TableCell>
+
+                    {/* Tags */}
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Badge
+                            variant="secondary"
+                            className="border-gray-500/30 bg-gray-500/10 text-xs text-gray-300 transition-colors hover:bg-gray-500/20"
+                          >
+                            Hip Hop
+                          </Badge>
+                        </motion.div>
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Badge
+                            variant="outline"
+                            className="border-blue-500/30 bg-blue-500/10 text-xs text-blue-300 transition-colors hover:bg-blue-500/20"
+                          >
+                            Trap
+                          </Badge>
+                        </motion.div>
+                      </div>
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell className="pr-6 text-right">
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex justify-end"
+                      >
+                        {/* Cart Button */}
+                        {(() => {
+                          const trackCartItems = cartItems.filter(
+                            (item) => item.trackId === track.id,
+                          );
+                          const isInCart = trackCartItems.length > 0;
+                          const selectedLicense =
+                            trackCartItems[0]?.licenseType;
+
+                          return (
+                            <div className="relative">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant={isInCart ? "default" : "ghost"}
+                                    className={`h-8 w-8 rounded-full border transition-all duration-200 ${
+                                      isInCart
+                                        ? "bg-primary border-primary text-primary-foreground hover:bg-primary/90"
+                                        : "text-muted-foreground hover:text-foreground border-white/20 bg-white/10 hover:border-white/40 hover:bg-white/20"
+                                    }`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+
+                                      if (isInCart) {
+                                        // Remove from cart
+                                        const cartItem = trackCartItems[0];
+                                        if (cartItem) {
+                                          removeItem(
+                                            cartItem.trackId,
+                                            cartItem.licenseType,
+                                          );
+                                        }
+                                      } else {
+                                        // Add to cart
+                                        const prices = track.prices || [];
+                                        if (prices.length === 1) {
+                                          addItem({
+                                            trackId: track.id,
+                                            trackName: track.name,
+                                            artist: track.artist,
+                                            licenseType: prices[0].licenseType,
+                                            price: prices[0].price,
+                                            stripePriceId:
+                                              prices[0].stripePriceId,
+                                            coverUrl: track.coverUrl,
+                                          });
+                                        } else if (prices.length > 1) {
+                                          setLicenseModal({
+                                            open: true,
+                                            track,
+                                          });
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <ShoppingCart className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>
+                                    {isInCart
+                                      ? "Remove from Cart"
+                                      : "Add to Cart"}
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                          );
+                        })()}
+                      </motion.div>
+                    </TableCell>
+                  </motion.tr>
+                );
+              })}
+            </AnimatePresence>
+          </TableBody>
+        </Table>
+        {/* License Select Modal */}
+        {licenseModal.open && licenseModal.track && (
+          <LicenseSelectModal
+            open={licenseModal.open}
+            onClose={() => setLicenseModal({ open: false, track: null })}
+            prices={licenseModal.track.prices || []}
+            onSelect={(selected) => {
+              useCartStore.getState().addItem({
+                trackId: licenseModal.track!.id,
+                trackName: licenseModal.track!.name,
+                artist: licenseModal.track!.artist,
+                licenseType: selected.licenseType,
+                price: selected.price,
+                stripePriceId: selected.stripePriceId,
+                coverUrl: licenseModal.track!.coverUrl,
+              });
+            }}
+          />
+        )}
+      </div>
+    </TooltipProvider>
   );
 }

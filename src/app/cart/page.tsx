@@ -38,9 +38,10 @@ export default function CartPage() {
   // Get unique track IDs to fetch prices
   const trackIds = [...new Set(items.map((item) => item.trackId))];
 
-  // Fetch prices for all tracks in cart
-  const pricesQueries = trackIds.map((id) =>
-    api.track.getPricesById.useQuery({ id }),
+  // Fetch prices for all tracks in cart using a single query
+  const { data: allPrices } = api.track.getPricesByIds.useQuery(
+    { ids: trackIds },
+    { enabled: trackIds.length > 0 },
   );
 
   const handleChangeLicense = (trackId: string, currentLicense: string) => {
@@ -51,10 +52,10 @@ export default function CartPage() {
     if (!licenseModal) return;
 
     const { trackId, currentLicense } = licenseModal;
-    const trackPrices = pricesQueries.find((q) =>
-      q.data?.some((p) => p.trackId === trackId),
-    )?.data;
-    const newPrice = trackPrices?.find((p) => p.licenseType === newLicense);
+    const trackPrices = allPrices?.filter((p: any) => p.trackId === trackId);
+    const newPrice = trackPrices?.find(
+      (p: any) => p.licenseType === newLicense,
+    );
 
     if (newPrice) {
       // Remove old item and add new one
@@ -154,9 +155,7 @@ export default function CartPage() {
           <AnimatePresence>
             {items.map((item, index) => {
               const trackPrices =
-                pricesQueries.find((q) =>
-                  q.data?.some((p) => p.trackId === item.trackId),
-                )?.data ?? [];
+                allPrices?.filter((p: any) => p.trackId === item.trackId) ?? [];
 
               return (
                 <motion.div
@@ -315,7 +314,7 @@ export default function CartPage() {
                     <Download className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-400" />
                     <div>
                       <h4 className="mb-1 font-semibold text-blue-400">
-                        What's Included
+                        What&apos;s Included
                       </h4>
                       <ul className="space-y-1 text-sm text-blue-300/80">
                         <li>
@@ -374,11 +373,9 @@ export default function CartPage() {
                   <SelectValue placeholder="Select license type" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  {pricesQueries
-                    .find((q) =>
-                      q.data?.some((p) => p.trackId === licenseModal.trackId),
-                    )
-                    ?.data?.map((price) => (
+                  {allPrices
+                    ?.filter((p: any) => p.trackId === licenseModal.trackId)
+                    .map((price: any) => (
                       <SelectItem
                         key={price.licenseType}
                         value={price.licenseType}

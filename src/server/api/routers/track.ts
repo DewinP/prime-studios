@@ -61,6 +61,18 @@ export const trackRouter = createTRPCRouter({
       return track.prices;
     }),
 
+  getPricesByIds: publicProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .query(async ({ ctx, input }) => {
+      const tracks = await ctx.db.track.findMany({
+        where: { id: { in: input.ids } },
+        include: { prices: true },
+      });
+
+      // Flatten all prices from all tracks
+      return tracks.flatMap((track) => track.prices);
+    }),
+
   create: protectedProcedure
     .input(
       z.object({
@@ -314,6 +326,11 @@ export const trackRouter = createTRPCRouter({
       } catch (error) {
         console.error("Error deleting file from storage:", error);
       }
+
+      // Delete associated prices first
+      await ctx.db.trackPrice.deleteMany({
+        where: { trackId: input.id },
+      });
 
       const deletedTrack = await ctx.db.track.delete({
         where: { id: input.id },

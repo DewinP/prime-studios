@@ -76,7 +76,7 @@ export function AdminTrackList() {
 
   // Add license options
   const [editPrices, setEditPrices] = useState<
-    { id?: string; licenseType: string; price: number }[]
+    { id?: string; licenseType: string; price: number; displayPrice: string }[]
   >([]);
 
   // Fetch all tracks using admin query (includes drafts and published)
@@ -130,7 +130,8 @@ export function AdminTrackList() {
         id: p.id,
         licenseType: p.licenseType,
         price: p.price,
-      })) || [],
+        displayPrice: (p.price / 100).toFixed(2),
+      })) ?? [],
     );
     setIsEditModalOpen(true);
   };
@@ -146,7 +147,10 @@ export function AdminTrackList() {
   };
 
   const handleAddEditPrice = () => {
-    setEditPrices((prev) => [...prev, { licenseType: "mp3_lease", price: 0 }]); // price is stored in cents
+    setEditPrices((prev) => [
+      ...prev,
+      { licenseType: "mp3_lease", price: 0, displayPrice: "0.00" },
+    ]); // price is stored in cents
   };
 
   const handleRemoveEditPrice = (index: number) => {
@@ -159,7 +163,7 @@ export function AdminTrackList() {
       id: editingTrack.id,
       name: editForm.name,
       status: editForm.status,
-      prices: editPrices,
+      prices: editPrices.map(({ displayPrice, ...price }) => price),
     });
   };
 
@@ -348,12 +352,23 @@ export function AdminTrackList() {
                           type="number"
                           min={0}
                           step="0.01"
-                          value={(p.price / 100).toFixed(2)}
+                          value={p.displayPrice}
                           onChange={(e) => {
-                            const dollarAmount =
-                              parseFloat(e.target.value) || 0;
+                            const value = e.target.value;
+                            const dollarAmount = parseFloat(value) || 0;
                             const centsAmount = Math.round(dollarAmount * 100);
+                            handleEditPriceChange(i, "displayPrice", value);
                             handleEditPriceChange(i, "price", centsAmount);
+                          }}
+                          onBlur={(e) => {
+                            const value = e.target.value;
+                            const dollarAmount = parseFloat(value) || 0;
+                            const formattedValue = dollarAmount.toFixed(2);
+                            handleEditPriceChange(
+                              i,
+                              "displayPrice",
+                              formattedValue,
+                            );
                           }}
                           className="bg-background border-border text-foreground w-28"
                           placeholder="Price ($)"

@@ -82,7 +82,7 @@ export function UploadTrackModal({
 
   // Add state for prices
   const [prices, setPrices] = useState([
-    { licenseType: "mp3_lease", price: 0 }, // price is stored in cents
+    { licenseType: "mp3_lease", price: 0, displayPrice: "0.00" }, // price is stored in cents
   ]);
 
   const handleAudioFileChange = (file: File) => {
@@ -124,7 +124,10 @@ export function UploadTrackModal({
   };
 
   const handleAddPrice = () => {
-    setPrices((prev) => [...prev, { licenseType: "mp3_lease", price: 0 }]); // price is stored in cents
+    setPrices((prev) => [
+      ...prev,
+      { licenseType: "mp3_lease", price: 0, displayPrice: "0.00" },
+    ]); // price is stored in cents
   };
 
   const handleRemovePrice = (index: number) => {
@@ -173,7 +176,7 @@ export function UploadTrackModal({
         duration: formData.duration,
         audioUrl: `${supabase.storage.from("tracks").getPublicUrl(uploadResult.url).data.publicUrl}`,
         status: formData.status as "draft" | "published",
-        prices: prices.map((p) => ({
+        prices: prices.map(({ ...p }) => ({
           licenseType: p.licenseType,
           price: Number(p.price),
         })),
@@ -208,6 +211,7 @@ export function UploadTrackModal({
       duration: 0,
       prices: [{ licenseType: "mp3_lease", price: 0 }],
     });
+    setPrices([{ licenseType: "mp3_lease", price: 0, displayPrice: "0.00" }]);
     setUploadError(null);
     onOpenChange(false);
   };
@@ -360,11 +364,19 @@ export function UploadTrackModal({
                     type="number"
                     min={0}
                     step="0.01"
-                    value={(p.price / 100).toFixed(2)}
+                    value={p.displayPrice}
                     onChange={(e) => {
-                      const dollarAmount = parseFloat(e.target.value) || 0;
+                      const value = e.target.value;
+                      const dollarAmount = parseFloat(value) || 0;
                       const centsAmount = Math.round(dollarAmount * 100);
+                      handlePriceChange(i, "displayPrice", value);
                       handlePriceChange(i, "price", centsAmount);
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value;
+                      const dollarAmount = parseFloat(value) || 0;
+                      const formattedValue = dollarAmount.toFixed(2);
+                      handlePriceChange(i, "displayPrice", formattedValue);
                     }}
                     className="bg-background border-border text-foreground w-28"
                     placeholder="Price ($)"

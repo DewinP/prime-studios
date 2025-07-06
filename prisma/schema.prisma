@@ -36,7 +36,7 @@ model Track {
 model TrackPrice {
   id            String   @id @default(uuid())
   trackId       String
-  track         Track    @relation(fields: [trackId], references: [id])
+  track         Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
   licenseType   String   // e.g., "mp3_lease", "wav_lease", etc.
   price         Int      // in cents
   stripePriceId String   // Stripe Price ID
