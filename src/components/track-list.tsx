@@ -15,8 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import {
   Tooltip,
@@ -24,64 +22,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { LicenseSelectModal } from "@/components/shared/modals/license-select-modal";
 
 type Track = RouterOutputs["track"]["getAll"][number];
 
 interface TrackListProps {
   tracks: Track[];
-}
-
-function LicenseSelectModal({
-  open,
-  onClose,
-  prices,
-  onSelect,
-}: {
-  open: boolean;
-  onClose: () => void;
-  prices: { licenseType: string; price: number; stripePriceId: string }[];
-  onSelect: (license: {
-    licenseType: string;
-    price: number;
-    stripePriceId: string;
-  }) => void;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-card border-border max-w-lg">
-        <DialogTitle className="text-foreground mb-4 text-center text-xl font-bold">
-          Select a License
-        </DialogTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {prices.map((p) => (
-            <Card
-              key={p.licenseType}
-              className="group bg-background hover:border-primary hover:bg-primary/10 cursor-pointer border-2 border-transparent p-6 text-center shadow transition-all"
-              onClick={() => {
-                onSelect(p);
-                onClose();
-              }}
-            >
-              <div className="text-primary mb-2 text-xs font-semibold tracking-widest uppercase">
-                {p.licenseType.replace(/_/g, " ")}
-              </div>
-              <div className="text-foreground mb-1 text-3xl font-extrabold">
-                ${(p.price / 100).toFixed(2)}
-              </div>
-              <div className="text-muted-foreground text-xs">
-                Instant Download
-              </div>
-            </Card>
-          ))}
-        </div>
-        <div className="mt-6 text-center">
-          <Button variant="secondary" className="w-full" onClick={onClose}>
-            Cancel
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 export function TrackList({ tracks }: TrackListProps) {
@@ -375,7 +321,7 @@ export function TrackList({ tracks }: TrackListProps) {
                                       } else {
                                         // Add to cart
                                         const prices = track.prices || [];
-                                        if (prices.length === 1) {
+                                        if (prices.length === 1 && prices[0]) {
                                           addItem({
                                             trackId: track.id,
                                             trackName: track.name,
@@ -384,7 +330,8 @@ export function TrackList({ tracks }: TrackListProps) {
                                             price: prices[0].price,
                                             stripePriceId:
                                               prices[0].stripePriceId,
-                                            coverUrl: track.coverUrl,
+                                            coverUrl:
+                                              track.coverUrl ?? undefined,
                                           });
                                         } else if (prices.length > 1) {
                                           setLicenseModal({
@@ -422,17 +369,20 @@ export function TrackList({ tracks }: TrackListProps) {
           <LicenseSelectModal
             open={licenseModal.open}
             onClose={() => setLicenseModal({ open: false, track: null })}
-            prices={licenseModal.track.prices || []}
+            prices={licenseModal.track.prices?.filter(Boolean) || []}
             onSelect={(selected) => {
-              useCartStore.getState().addItem({
-                trackId: licenseModal.track!.id,
-                trackName: licenseModal.track!.name,
-                artist: licenseModal.track!.artist,
-                licenseType: selected.licenseType,
-                price: selected.price,
-                stripePriceId: selected.stripePriceId,
-                coverUrl: licenseModal.track!.coverUrl,
-              });
+              const track = licenseModal.track;
+              if (track) {
+                useCartStore.getState().addItem({
+                  trackId: track.id,
+                  trackName: track.name,
+                  artist: track.artist,
+                  licenseType: selected.licenseType,
+                  price: selected.price,
+                  stripePriceId: selected.stripePriceId,
+                  coverUrl: track.coverUrl ?? undefined,
+                });
+              }
             }}
           />
         )}

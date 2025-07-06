@@ -11,10 +11,16 @@ import {
   Shield,
   Download,
   Music,
+  FileText,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -24,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { LicenseSelectModal } from "@/components/shared/modals/license-select-modal";
 
 export default function CartPage() {
   const { items, removeItem, clearCart } = useCartStore();
@@ -31,6 +38,15 @@ export default function CartPage() {
     open: boolean;
     trackId: string;
     currentLicense: string;
+    trackName: string;
+    artist: string;
+    coverUrl: string | null;
+  } | null>(null);
+  const [licenseReviewModal, setLicenseReviewModal] = useState<{
+    open: boolean;
+    trackName: string;
+    artist: string;
+    licenseType: string;
   } | null>(null);
 
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
@@ -45,36 +61,44 @@ export default function CartPage() {
   );
 
   const handleChangeLicense = (trackId: string, currentLicense: string) => {
-    setLicenseModal({ open: true, trackId, currentLicense });
+    const item = items.find(
+      (item) => item.trackId === trackId && item.licenseType === currentLicense,
+    );
+    if (item) {
+      setLicenseModal({
+        open: true,
+        trackId,
+        currentLicense,
+        trackName: item.trackName,
+        artist: item.artist,
+        coverUrl: item.coverUrl ?? null,
+      });
+    }
   };
 
-  const handleLicenseChange = (newLicense: string) => {
+  const handleLicenseChange = (license: {
+    licenseType: string;
+    price: number;
+    stripePriceId: string;
+  }) => {
     if (!licenseModal) return;
 
     const { trackId, currentLicense } = licenseModal;
-    const trackPrices = allPrices?.filter((p: any) => p.trackId === trackId);
-    const newPrice = trackPrices?.find(
-      (p: any) => p.licenseType === newLicense,
+    const oldItem = items.find(
+      (item) => item.trackId === trackId && item.licenseType === currentLicense,
     );
 
-    if (newPrice) {
-      // Remove old item and add new one
-      const oldItem = items.find(
-        (item) =>
-          item.trackId === trackId && item.licenseType === currentLicense,
-      );
-      if (oldItem) {
-        removeItem(trackId, currentLicense);
-        useCartStore.getState().addItem({
-          trackId: oldItem.trackId,
-          trackName: oldItem.trackName,
-          artist: oldItem.artist,
-          licenseType: newLicense,
-          price: newPrice.price,
-          stripePriceId: newPrice.stripePriceId,
-          coverUrl: oldItem.coverUrl,
-        });
-      }
+    if (oldItem) {
+      removeItem(trackId, currentLicense);
+      useCartStore.getState().addItem({
+        trackId: oldItem.trackId,
+        trackName: oldItem.trackName,
+        artist: oldItem.artist,
+        licenseType: license.licenseType,
+        price: license.price,
+        stripePriceId: license.stripePriceId,
+        coverUrl: oldItem.coverUrl,
+      });
     }
 
     setLicenseModal(null);
@@ -165,42 +189,63 @@ export default function CartPage() {
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="overflow-hidden border-white/10 bg-white/5 backdrop-blur-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-6">
+                  <Card className="relative overflow-hidden border-white/10 bg-white/5 backdrop-blur-sm">
+                    <CardContent className="p-4">
+                      {/* WAV Lease Badge */}
+                      <div className="absolute top-2 right-2 z-10">
+                        <Badge
+                          variant="secondary"
+                          className="border-blue-500/30 bg-blue-500/20 text-xs font-medium text-blue-300"
+                        >
+                          WAV Lease
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4">
                         {/* Cover Art */}
                         <div className="relative flex-shrink-0">
                           <img
                             src={item.coverUrl ?? "/logo.png"}
                             alt={item.trackName}
-                            className="h-20 w-20 rounded-lg border border-white/20 object-cover shadow-lg"
+                            className="h-12 w-12 rounded-lg border border-white/20 object-cover shadow-md"
                           />
-                          <div className="bg-primary absolute -right-1 -bottom-1 rounded-full p-1">
-                            <Music className="text-primary-foreground h-3 w-3" />
+                          <div className="bg-primary absolute -right-0.5 -bottom-0.5 rounded-full p-0.5">
+                            <Music className="text-primary-foreground h-2 w-2" />
                           </div>
                         </div>
 
                         {/* Track Info */}
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between">
+                          <div className="flex items-center justify-between">
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-foreground mb-1 truncate text-xl font-semibold">
+                              <h3 className="text-foreground truncate text-base font-semibold">
                                 {item.trackName}
                               </h3>
-                              <p className="text-muted-foreground mb-3 text-sm">
+                              <p className="text-muted-foreground text-sm">
                                 by {item.artist}
                               </p>
+                            </div>
 
-                              {/* License Selection */}
-                              <div className="flex items-center gap-3">
-                                <Badge
-                                  variant="secondary"
-                                  className="bg-primary/20 text-primary border-primary/30"
+                            {/* License and Actions */}
+                            <div className="flex w-64 items-center justify-center">
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  onClick={() =>
+                                    setLicenseReviewModal({
+                                      open: true,
+                                      trackName: item.trackName,
+                                      artist: item.artist,
+                                      licenseType: item.licenseType,
+                                    })
+                                  }
+                                  className="text-muted-foreground hover:text-primary h-6 px-2 text-xs"
                                 >
-                                  {item.licenseType.replace(/_/g, " ")}
-                                </Badge>
+                                  <FileText className="mr-1 h-3 w-3" />
+                                  Review License
+                                </Button>
 
-                                {trackPrices.length > 1 && (
+                                {trackPrices.length > 1 ? (
                                   <Button
                                     variant="link"
                                     size="sm"
@@ -210,22 +255,21 @@ export default function CartPage() {
                                         item.licenseType,
                                       )
                                     }
-                                    className="text-muted-foreground hover:text-primary text-xs"
+                                    className="text-muted-foreground hover:text-primary h-6 px-2 text-xs"
                                   >
                                     Change License
                                   </Button>
+                                ) : (
+                                  <div className="w-12" />
                                 )}
                               </div>
                             </div>
 
-                            {/* Price and Actions */}
-                            <div className="flex items-center gap-4">
+                            {/* Price and Remove */}
+                            <div className="ml-8 flex items-center gap-3">
                               <div className="text-right">
-                                <div className="text-foreground text-2xl font-bold">
+                                <div className="text-foreground text-lg font-bold">
                                   ${(item.price / 100).toFixed(2)}
-                                </div>
-                                <div className="text-muted-foreground text-xs">
-                                  Instant Download
                                 </div>
                               </div>
 
@@ -235,10 +279,10 @@ export default function CartPage() {
                                 onClick={() =>
                                   removeItem(item.trackId, item.licenseType)
                                 }
-                                className="text-destructive hover:bg-destructive/10"
+                                className="text-destructive hover:bg-destructive/10 h-8 w-8"
                                 aria-label="Remove from cart"
                               >
-                                <Trash2 className="h-5 w-5" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
@@ -355,45 +399,212 @@ export default function CartPage() {
 
       {/* License Change Modal */}
       {licenseModal && (
-        <Dialog
+        <LicenseSelectModal
           open={licenseModal.open}
-          onOpenChange={() => setLicenseModal(null)}
+          onClose={() => setLicenseModal(null)}
+          prices={
+            allPrices?.filter((p) => p.trackId === licenseModal.trackId) ?? []
+          }
+          onSelect={handleLicenseChange}
+          title="Change License Type"
+          currentLicense={licenseModal.currentLicense}
+          showTrackInfo={true}
+          trackName={licenseModal.trackName}
+          artist={licenseModal.artist}
+          coverUrl={licenseModal.coverUrl}
+        />
+      )}
+
+      {/* License Review Modal */}
+      {licenseReviewModal && (
+        <Dialog
+          open={licenseReviewModal.open}
+          onOpenChange={() => setLicenseReviewModal(null)}
         >
-          <DialogContent className="bg-card border-border max-w-lg">
-            <DialogTitle className="text-foreground mb-4 text-xl font-bold">
-              Change License Type
-            </DialogTitle>
-            <div className="space-y-4">
-              <p className="text-muted-foreground text-sm">
-                Select a different license option for this track:
-              </p>
+          <DialogContent className="bg-card border-border max-h-[80vh] max-w-4xl overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-foreground text-xl font-bold">
+                License Agreement Preview
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              {/* Track Info */}
+              <div className="border-border/50 bg-background/50 rounded-lg border p-4">
+                <h3 className="text-foreground mb-2 font-semibold">
+                  {licenseReviewModal.trackName}
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  by {licenseReviewModal.artist}
+                </p>
+                <Badge
+                  variant="secondary"
+                  className="bg-primary/20 text-primary border-primary/30 mt-2"
+                >
+                  {licenseReviewModal.licenseType.replace(/_/g, " ")}
+                </Badge>
+              </div>
 
-              <Select onValueChange={handleLicenseChange}>
-                <SelectTrigger className="bg-background border-border text-foreground">
-                  <SelectValue placeholder="Select license type" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {allPrices
-                    ?.filter((p: any) => p.trackId === licenseModal.trackId)
-                    .map((price: any) => (
-                      <SelectItem
-                        key={price.licenseType}
-                        value={price.licenseType}
-                      >
-                        {price.licenseType.replace(/_/g, " ")} - $
-                        {(price.price / 100).toFixed(2)}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              {/* License Agreement */}
+              <div className="space-y-4">
+                <h4 className="text-foreground text-lg font-semibold">
+                  License Agreement
+                </h4>
+                <div className="text-muted-foreground space-y-4 text-sm leading-relaxed">
+                  <p>
+                    <strong>1. GRANT OF LICENSE</strong>
+                  </p>
+                  <p>
+                    Subject to the terms and conditions of this Agreement, Prime
+                    Studios NYC (&quot;Licensor&quot;) hereby grants to you
+                    (&quot;Licensee&quot;) a non-exclusive, non-transferable
+                    license to use the musical composition &quot;
+                    {licenseReviewModal.trackName}&quot; (the &quot;Work&quot;)
+                    in accordance with the terms specified herein.
+                  </p>
 
-              <div className="flex justify-end gap-2 pt-4">
+                  <p>
+                    <strong>
+                      2. LICENSE TYPE:{" "}
+                      {licenseReviewModal.licenseType
+                        .replace(/_/g, " ")
+                        .toUpperCase()}
+                    </strong>
+                  </p>
+                  <p>
+                    This license grants you the following rights based on your
+                    selected license type:
+                  </p>
+
+                  {licenseReviewModal.licenseType === "mp3_lease" && (
+                    <ul className="list-disc space-y-1 pl-6">
+                      <li>Unlimited commercial use in one project</li>
+                      <li>MP3 format delivery</li>
+                      <li>Valid for one commercial release</li>
+                      <li>
+                        Credit required: &quot;Music by Prime Studios NYC&quot;
+                      </li>
+                    </ul>
+                  )}
+
+                  {licenseReviewModal.licenseType === "wav_lease" && (
+                    <ul className="list-disc space-y-1 pl-6">
+                      <li>Unlimited commercial use in one project</li>
+                      <li>WAV format delivery (high quality)</li>
+                      <li>Valid for one commercial release</li>
+                      <li>
+                        Credit required: &quot;Music by Prime Studios NYC&quot;
+                      </li>
+                      <li>Includes stems for remixing</li>
+                    </ul>
+                  )}
+
+                  {licenseReviewModal.licenseType === "wav_trackout_lease" && (
+                    <ul className="list-disc space-y-1 pl-6">
+                      <li>Unlimited commercial use in one project</li>
+                      <li>WAV format delivery with individual trackouts</li>
+                      <li>Valid for one commercial release</li>
+                      <li>
+                        Credit required: &quot;Music by Prime Studios NYC&quot;
+                      </li>
+                      <li>Full mixing control with individual tracks</li>
+                    </ul>
+                  )}
+
+                  {licenseReviewModal.licenseType === "unlimited_lease" && (
+                    <ul className="list-disc space-y-1 pl-6">
+                      <li>Unlimited commercial use in unlimited projects</li>
+                      <li>WAV format delivery</li>
+                      <li>No expiration date</li>
+                      <li>
+                        Credit required: &quot;Music by Prime Studios NYC&quot;
+                      </li>
+                      <li>Includes stems for remixing</li>
+                    </ul>
+                  )}
+
+                  {licenseReviewModal.licenseType === "exclusive" && (
+                    <ul className="list-disc space-y-1 pl-6">
+                      <li>Exclusive rights to the composition</li>
+                      <li>WAV format delivery with all stems</li>
+                      <li>No expiration date</li>
+                      <li>No credit required</li>
+                      <li>Full ownership transfer</li>
+                      <li>Licensor cannot sell to others</li>
+                    </ul>
+                  )}
+
+                  <p>
+                    <strong>3. RESTRICTIONS</strong>
+                  </p>
+                  <p>
+                    Licensee may not: (a) sell, lease, or transfer the Work to
+                    any third party; (b) use the Work in a manner that violates
+                    any applicable laws or regulations; (c) claim ownership of
+                    the Work; or (d) use the Work in projects that promote hate
+                    speech, violence, or illegal activities.
+                  </p>
+
+                  <p>
+                    <strong>4. TERM</strong>
+                  </p>
+                  <p>
+                    This license is effective upon payment and shall continue in
+                    perpetuity unless terminated in accordance with the terms
+                    herein.
+                  </p>
+
+                  <p>
+                    <strong>5. TERMINATION</strong>
+                  </p>
+                  <p>
+                    Licensor may terminate this license if Licensee breaches any
+                    material term of this Agreement. Upon termination, Licensee
+                    must cease all use of the Work and destroy all copies.
+                  </p>
+
+                  <p>
+                    <strong>6. WARRANTY</strong>
+                  </p>
+                  <p>
+                    Licensor warrants that it has the right to grant this
+                    license and that the Work does not infringe upon the rights
+                    of any third party.
+                  </p>
+
+                  <p>
+                    <strong>7. LIMITATION OF LIABILITY</strong>
+                  </p>
+                  <p>
+                    In no event shall Licensor be liable for any indirect,
+                    incidental, special, or consequential damages arising out of
+                    or relating to this Agreement.
+                  </p>
+
+                  <p>
+                    <strong>8. GOVERNING LAW</strong>
+                  </p>
+                  <p>
+                    This Agreement shall be governed by and construed in
+                    accordance with the laws of the State of New York, United
+                    States.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="border-border/50 flex justify-end gap-3 border-t pt-6">
                 <Button
                   variant="outline"
-                  onClick={() => setLicenseModal(null)}
+                  onClick={() => setLicenseReviewModal(null)}
                   className="border-border text-foreground"
                 >
-                  Cancel
+                  Close
+                </Button>
+                <Button
+                  onClick={() => setLicenseReviewModal(null)}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  I Understand
                 </Button>
               </div>
             </div>

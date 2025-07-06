@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUserAuth } from "@/lib/use-user-auth";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function Header() {
+  const router = useRouter();
   const pathname = usePathname();
   const { user } = useUserAuth();
   const { signOut } = useAuth();
@@ -31,6 +32,7 @@ export function Header() {
 
   const handleSignOut = async () => {
     await signOut();
+    router.push("/");
   };
 
   return (
