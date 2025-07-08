@@ -1,4 +1,5 @@
-import { createAuthClient } from "better-auth/react";
+import { createAuthClient } from "better-auth/client";
+import { adminClient } from "better-auth/client/plugins";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") {
@@ -11,4 +12,5 @@ function getBaseUrl() {
 
 export const authClient = createAuthClient({
   baseURL: `${getBaseUrl()}/api/auth`,
+  plugins: [adminClient()],
 });

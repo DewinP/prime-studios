@@ -21,19 +21,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { LicenseSelectModal } from "@/components/shared/modals/license-select-modal";
+import { useAuth } from "@/lib/auth-context";
 
 export default function CartPage() {
   const { items, removeItem, clearCart } = useCartStore();
+  const { session } = useAuth();
   const [licenseModal, setLicenseModal] = useState<{
     open: boolean;
     trackId: string;
@@ -104,42 +101,68 @@ export default function CartPage() {
     setLicenseModal(null);
   };
 
+  const createOrderMutation = api.order.createOrder.useMutation();
+  const createGuestOrderMutation = api.order.createGuestOrder.useMutation();
+
   const handleCheckout = async () => {
     try {
-      const response = await fetch("/api/stripe/create-cart-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          items,
-          successUrl: `${window.location.origin}/payment/success`,
-          cancelUrl: `${window.location.origin}/cart`,
-        }),
+      // Get user info if logged in
+      const user = session?.user;
+
+      // Map items with correct trackPriceId
+      const orderItems = items.map((item) => {
+        // Find the matching track price for this item
+        const matchingPrice = allPrices?.find(
+          (p) =>
+            p.trackId === item.trackId && p.licenseType === item.licenseType,
+        );
+
+        if (!matchingPrice) {
+          throw new Error(
+            `No price found for track ${item.trackName} with license ${item.licenseType}`,
+          );
+        }
+
+        return {
+          trackId: item.trackId,
+          trackPriceId: matchingPrice.id,
+          licenseType: item.licenseType,
+          quantity: 1,
+          unitPrice: item.price,
+          stripePriceId: item.stripePriceId,
+        };
       });
 
-      const data = (await response.json()) as { url?: string; error?: string };
+      const orderData = {
+        items: orderItems,
+        successUrl: `${window.location.origin}/payment/success`,
+        cancelUrl: `${window.location.origin}/cart`,
+      };
 
-      if (data.url) {
+      // Use appropriate mutation based on authentication status
+      const result = user
+        ? await createOrderMutation.mutateAsync(orderData)
+        : await createGuestOrderMutation.mutateAsync(orderData);
+
+      if (result.url) {
         // Redirect to Stripe Checkout
-        window.location.href = data.url;
+        window.location.href = result.url;
       } else {
-        throw new Error(data.error ?? "Failed to create checkout session");
+        throw new Error("No checkout URL received");
       }
     } catch (error) {
       console.error("Checkout error:", error);
       // You could add a toast notification here
-      alert("Failed to create checkout session. Please try again.");
+      alert("Failed to create order. Please try again.");
     }
   };
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16">
+      <div className="mx-auto min-h-screen max-w-4xl px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center"
         >
           <div className="bg-muted/20 mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full">
             <ShoppingCart className="text-muted-foreground h-12 w-12" />
@@ -159,7 +182,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16">
+    <div className="mx-auto min-h-full max-w-4xl px-4 py-16">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -179,7 +202,7 @@ export default function CartPage() {
           <AnimatePresence>
             {items.map((item, index) => {
               const trackPrices =
-                allPrices?.filter((p: any) => p.trackId === item.trackId) ?? [];
+                allPrices?.filter((p) => p.trackId === item.trackId) ?? [];
 
               return (
                 <motion.div
@@ -203,9 +226,11 @@ export default function CartPage() {
                       <div className="flex items-center gap-4">
                         {/* Cover Art */}
                         <div className="relative flex-shrink-0">
-                          <img
+                          <Image
                             src={item.coverUrl ?? "/logo.png"}
                             alt={item.trackName}
+                            width={48}
+                            height={48}
                             className="h-12 w-12 rounded-lg border border-white/20 object-cover shadow-md"
                           />
                           <div className="bg-primary absolute -right-0.5 -bottom-0.5 rounded-full p-0.5">
@@ -408,7 +433,6 @@ export default function CartPage() {
           onSelect={handleLicenseChange}
           title="Change License Type"
           currentLicense={licenseModal.currentLicense}
-          showTrackInfo={true}
           trackName={licenseModal.trackName}
           artist={licenseModal.artist}
           coverUrl={licenseModal.coverUrl}

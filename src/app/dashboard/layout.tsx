@@ -1,14 +1,69 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BarChart2, Music, CreditCard, Settings } from "lucide-react";
+import { useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { Shield, BarChart2, Music, CreditCard, Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const hasPermission = await authClient.admin.hasPermission({
+          permissions: {
+            user: ["list"],
+          },
+        });
+        setIsAdmin(hasPermission.data?.success ?? false);
+      } catch (error) {
+        console.error("Failed to check admin status:", error);
+        setIsAdmin(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void checkAdminStatus();
+  }, []);
+
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      void router.push("/");
+    }
+  }, [isAdmin, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen justify-center">
+        <div className="text-center">
+          <Shield className="mx-auto mb-4 h-8 w-8 animate-pulse" />
+          <p>Checking admin permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex min-h-screen justify-center">
+        <div className="text-center">
+          <Shield className="mx-auto mb-4 h-8 w-8 animate-pulse" />
+          <p>Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background flex min-h-full">
       <aside className="bg-background/90 hidden w-64 flex-col space-y-8 border-r p-6 md:flex">
@@ -28,16 +83,16 @@ export default function DashboardLayout({
             Tracks
           </SidebarLink>
           <SidebarLink
-            href="/dashboard/payments"
+            href="/dashboard/orders"
             icon={<CreditCard className="h-5 w-5" />}
-            active={pathname === "/dashboard/payments"}
+            active={pathname === "/dashboard/orders"}
           >
-            Payment History
+            Order History
           </SidebarLink>
           <SidebarLink
-            href="/settings"
+            href="/dashboard/settings"
             icon={<Settings className="h-5 w-5" />}
-            active={pathname === "/settings"}
+            active={pathname === "/dashboard/settings"}
           >
             Settings
           </SidebarLink>

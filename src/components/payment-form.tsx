@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
+import { api } from "@/trpc/react";
 
 interface PaymentFormProps {
   amount: number;
@@ -29,36 +30,35 @@ export function PaymentForm({
   onCancel,
 }: PaymentFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const createGuestOrderMutation = api.order.createGuestOrder.useMutation();
 
   const handlePayment = async () => {
     setIsProcessing(true);
 
     try {
-      const response = await fetch("/api/stripe/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount,
-          productId,
-          description,
-          metadata,
-          successUrl: `${window.location.origin}/payment/success`,
-          cancelUrl: `${window.location.origin}/payment`,
-        }),
+      const result = await createGuestOrderMutation.mutateAsync({
+        items: [
+          {
+            trackId: productId, // Using productId as trackId for single items
+            trackPriceId: undefined, // Not needed for single payments
+            licenseType: "single_payment",
+            quantity: 1,
+            unitPrice: amount,
+            stripePriceId: "", // Not needed for single payments
+          },
+        ],
+        successUrl: `${window.location.origin}/payment/success`,
+        cancelUrl: `${window.location.origin}/payment`,
       });
 
-      const data = (await response.json()) as { url?: string };
-
-      if (data.url) {
+      if (result.url) {
         // Redirect to Stripe Checkout
-        window.location.href = data.url;
+        window.location.href = result.url;
       } else {
         throw new Error("No checkout URL received");
       }
     } catch (error) {
-      toast.error("Failed to create checkout session");
+      toast.error("Failed to create order");
       console.error("Payment error:", error);
     } finally {
       setIsProcessing(false);

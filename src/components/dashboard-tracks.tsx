@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -111,17 +112,14 @@ export function DashboardTracks({ tracks }: DashboardTracksProps) {
           </p>
         </div>
 
-        {/* Add Track Button - Only show for admins */}
-        {user?.isAdmin && (
-          <div className="mb-8">
-            <Button
-              onClick={() => setIsUploadModalOpen(true)}
-              className="hover:shadow-glow-brand px-6 py-3 transition-all duration-200"
-            >
-              + Add New Track
-            </Button>
-          </div>
-        )}
+        <div className="mb-8">
+          <Button
+            onClick={() => setIsUploadModalOpen(true)}
+            className="hover:shadow-glow-brand px-6 py-3 transition-all duration-200"
+          >
+            + Add New Track
+          </Button>
+        </div>
 
         {/* Tracks List */}
         <Card className="border-border/50 bg-gradient-card shadow-glow border">
@@ -144,9 +142,11 @@ export function DashboardTracks({ tracks }: DashboardTracksProps) {
                   <div className="flex items-center space-x-4">
                     <div className="border-border/25 bg-muted/50 flex h-12 w-12 items-center justify-center rounded-lg border">
                       {track.coverUrl ? (
-                        <img
+                        <Image
                           src={track.coverUrl}
                           alt={track.name}
+                          width={48}
+                          height={48}
                           className="h-full w-full rounded-lg object-cover"
                         />
                       ) : (

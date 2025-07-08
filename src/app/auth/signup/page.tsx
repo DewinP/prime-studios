@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,13 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-export default function AdminSignupPage() {
+export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,7 +30,7 @@ export default function AdminSignupPage() {
       if (error) {
         setError(error.message ?? "Signup failed");
       } else {
-        router.push("/dashboard");
+        window.location.href = "/";
       }
     } catch (err) {
       console.error(err);
@@ -51,10 +49,10 @@ export default function AdminSignupPage() {
               className="text-gradient-brand text-center text-3xl"
               style={{ fontFamily: "alfarn-2" }}
             >
-              Studio Admin Signup
+              Sign Up
             </CardTitle>
             <p className="text-muted-foreground mt-2 text-center text-sm">
-              Create a new admin account for the studio.
+              Create a new account.
             </p>
           </CardHeader>
           <CardContent>
@@ -105,7 +103,7 @@ export default function AdminSignupPage() {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                Create Admin Account
+                Create Account
               </Button>
             </form>
             <div className="mt-6 text-center">

@@ -3,7 +3,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Share2,
   Play,
   Pause,
   MoreHorizontal,
@@ -17,6 +16,7 @@ import { useState } from "react";
 import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -163,7 +163,7 @@ export function AdminTrackList() {
       id: editingTrack.id,
       name: editForm.name,
       status: editForm.status,
-      prices: editPrices.map(({ displayPrice, ...price }) => price),
+      prices: editPrices.map(({ ...price }) => price),
     });
   };
 
@@ -330,7 +330,7 @@ export function AdminTrackList() {
                   <Label className="text-foreground">Price Options *</Label>
                   <div className="space-y-2">
                     {editPrices.map((p, i) => (
-                      <div key={p.id || i} className="flex items-center gap-2">
+                      <div key={p.id ?? i} className="flex items-center gap-2">
                         <Select
                           value={p.licenseType}
                           onValueChange={(val) =>
@@ -554,9 +554,11 @@ export function AdminTrackList() {
                             transition={{ duration: 0.2 }}
                           >
                             <div className="relative h-10 w-10 overflow-hidden rounded-lg border border-white/20 shadow-md">
-                              <img
+                              <Image
                                 src={track.coverUrl ?? "/logo.png"}
                                 alt={track.name}
+                                width={40}
+                                height={40}
                                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                               />
                               {isCurrentTrack && (

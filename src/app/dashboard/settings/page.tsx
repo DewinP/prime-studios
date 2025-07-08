@@ -15,33 +15,8 @@ import { User, Mail, Shield } from "lucide-react";
 import { api } from "@/trpc/react";
 
 export default function SettingsPage() {
-  const { user, isLoading } = useUserAuth();
-  const router = useRouter();
   const { data: adminUsers, isLoading: isLoadingAdmins } =
     api.auth.getAllAdmins.useQuery();
-
-  // Redirect non-admin users
-  useEffect(() => {
-    if (!isLoading && !user?.isAdmin) {
-      router.push("/");
-    }
-  }, [user, isLoading, router]);
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex min-h-[400px] items-center justify-center">
-          <div className="text-muted-foreground">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show access denied for non-admin users
-  if (!user?.isAdmin) {
-    return null; // Will redirect
-  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-10">
@@ -93,7 +68,7 @@ export default function SettingsPage() {
                         <div className="mb-1 flex items-center gap-2">
                           <h3 className="font-semibold">{admin.name}</h3>
                           <Badge variant="secondary" className="text-xs">
-                            {admin.isAdmin ? "Admin" : "User"}
+                            Admin
                           </Badge>
                         </div>
                         <div className="text-muted-foreground flex items-center gap-1 text-sm">

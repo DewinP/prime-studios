@@ -9,21 +9,20 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/trpc/react";
-import type { Payment } from "@prisma/client";
 
-export function PaymentHistory() {
+export function OrderHistory() {
   const {
-    data: payments,
+    data: orders,
     isLoading,
     error,
-  } = api.payment.getPaymentHistory.useQuery();
+  } = api.order.getOrderHistory.useQuery();
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Payment History</CardTitle>
-          <CardDescription>Loading your payment history...</CardDescription>
+          <CardTitle>Order History</CardTitle>
+          <CardDescription>Loading your order history...</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -33,21 +32,21 @@ export function PaymentHistory() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Payment History</CardTitle>
+          <CardTitle>Order History</CardTitle>
           <CardDescription>
-            Error loading payment history: {error.message}
+            Error loading order history: {error.message}
           </CardDescription>
         </CardHeader>
       </Card>
     );
   }
 
-  if (!payments || payments.length === 0) {
+  if (!orders || orders.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Payment History</CardTitle>
-          <CardDescription>No payments found.</CardDescription>
+          <CardTitle>Order History</CardTitle>
+          <CardDescription>No orders found.</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -56,39 +55,48 @@ export function PaymentHistory() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Payment History</CardTitle>
-        <CardDescription>Your recent payment transactions</CardDescription>
+        <CardTitle>Order History</CardTitle>
+        <CardDescription>Your recent orders</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {payments.map((payment: Payment) => (
+          {orders.map((order) => (
             <div
-              key={payment.id}
+              key={order.id}
               className="flex items-center justify-between rounded-lg border p-4"
             >
               <div className="space-y-1">
-                <p className="font-medium">
-                  ${(payment.amount / 100).toFixed(2)}{" "}
-                  {payment.currency.toUpperCase()}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">#{order.orderNumber}</p>
+                  <Badge
+                    variant={
+                      order.status === "paid"
+                        ? "default"
+                        : order.status === "failed"
+                          ? "destructive"
+                          : "secondary"
+                    }
+                  >
+                    {order.status}
+                  </Badge>
+                </div>
                 <p className="text-muted-foreground text-sm">
-                  {payment.description ?? "Payment"}
+                  {order.billingEmail} • {order.items.length} item
+                  {order.items.length !== 1 ? "s" : ""}
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  {new Date(payment.createdAt).toLocaleDateString()}
+                  {new Date(order.createdAt).toLocaleDateString()}
                 </p>
               </div>
-              <Badge
-                variant={
-                  payment.status === "succeeded"
-                    ? "default"
-                    : payment.status === "failed"
-                      ? "destructive"
-                      : "secondary"
-                }
-              >
-                {payment.status}
-              </Badge>
+              <div className="text-right">
+                <p className="font-medium">
+                  ${(order.total / 100).toFixed(2)}{" "}
+                  {order.currency.toUpperCase()}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {order.items.map((item) => item.licenseType).join(", ")}
+                </p>
+              </div>
             </div>
           ))}
         </div>

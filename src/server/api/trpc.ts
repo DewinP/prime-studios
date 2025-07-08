@@ -27,26 +27,38 @@ import { auth } from "@/lib/auth";
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   // Get session from Better Auth
-  const session = await auth.api.getSession({
-    headers: opts.headers,
-  });
-
-  // Get full user data if session exists
+  let session = null;
   let user = null;
-  if (session?.user) {
-    user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        emailVerified: true,
-        image: true,
-        isAdmin: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+
+  try {
+    session = await auth.api.getSession({
+      headers: opts.headers,
     });
+
+    // Get full user data if session exists
+    if (session?.user) {
+      try {
+        user = await db.user.findUnique({
+          where: { id: session.user.id },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            emailVerified: true,
+            image: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to get user:", error);
+        user = null;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to get session:", error);
+    // Continue with null session and user
   }
 
   return {
@@ -134,7 +146,7 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (!ctx.session?.user || !ctx.user) {
+    if (!ctx.session?.user.id) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
     return next({
@@ -150,12 +162,12 @@ export const protectedProcedure = t.procedure
 export const protectedAdminRoute = t.procedure
   .use(timingMiddleware)
   .use(async ({ ctx, next }) => {
-    if (!ctx.session?.user || !ctx.user) {
+    if (!ctx.session?.user.id) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
 
     // Check if user is admin
-    if (!ctx.user.isAdmin) {
+    if (ctx.session?.user.role !== "admin") {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Admin access required",

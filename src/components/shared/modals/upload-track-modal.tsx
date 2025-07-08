@@ -57,7 +57,7 @@ export function UploadTrackModal({
   onOpenChange,
   onUpload,
 }: UploadTrackModalProps) {
-  const { user, isAuthenticated } = useUserAuth();
+  const { user } = useUserAuth();
   const createTrackMutation = api.track.create.useMutation({
     onSuccess: () => {
       // Refetch tracks after successful creation
@@ -146,18 +146,6 @@ export function UploadTrackModal({
     setUploadError(null);
 
     try {
-      if (!isAuthenticated || !user?.id) {
-        setUploadError("You must be logged in to upload tracks");
-        return;
-      }
-
-      // Check if user is admin
-      if (!user.isAdmin) {
-        setUploadError("Only admins can upload tracks");
-        return;
-      }
-
-      // Upload the audio file to Supabase
       const uploadResult = await uploadService.uploadAudioFile(
         formData.audioFile,
         user.id,
@@ -168,7 +156,6 @@ export function UploadTrackModal({
         return;
       }
 
-      // Create the track in the database
       const trackData = {
         name: formData.name,
         artist: formData.artist,
@@ -185,7 +172,6 @@ export function UploadTrackModal({
       const createdTrack = await createTrackMutation.mutateAsync(trackData);
 
       if (createdTrack) {
-        // Call the parent upload handler with the created track data
         onUpload({
           ...formData,
           audioUrl: uploadResult.url,
@@ -215,22 +201,6 @@ export function UploadTrackModal({
     setUploadError(null);
     onOpenChange(false);
   };
-
-  // Show error if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="bg-card border-border max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Access Denied</DialogTitle>
-          </DialogHeader>
-          <div className="text-destructive py-4 text-center">
-            <p>You must be logged in to upload tracks.</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

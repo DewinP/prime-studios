@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { db } from "../server/db";
-import { oAuthProxy } from "better-auth/plugins";
+import { oAuthProxy, admin } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
 import { env } from "@/env";
@@ -36,15 +36,22 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
-    minPasswordLength: 6, // Allow shorter passwords for demo
+    minPasswordLength: 6,
     signUp: {
-      // Temporarily enable signup for admin creation
       enabled: true,
     },
   },
-  plugins: [nextCookies(), oAuthProxy()],
-  baseUrl: `${getBaseUrl()}/api/auth`,
-  trustedOrigins: [getBaseUrl()],
+  plugins: [
+    nextCookies(),
+    oAuthProxy(),
+    admin({
+      defaultRole: "user",
+      adminRoles: ["admin"],
+      impersonationSessionDuration: 60 * 60, // 1 hour
+    }),
+  ],
+  baseURL: `${getBaseUrl()}/api/auth`,
+  trustedOrigins: [getBaseUrl(), " https://db6437152f20.ngrok-free.app"],
   secret: env.BETTER_AUTH_SECRET,
 });
 

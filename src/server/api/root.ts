@@ -1,7 +1,8 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { trackRouter } from "./routers/track";
 import { authRouter } from "./routers/auth";
-import { paymentRouter } from "./routers/payment";
+import { orderRouter } from "./routers/order";
+import { stripeRouter } from "./routers/stripe";
 
 /**
  * This is the primary router for your server.
@@ -11,7 +12,8 @@ import { paymentRouter } from "./routers/payment";
 export const appRouter = createTRPCRouter({
   track: trackRouter,
   auth: authRouter,
-  payment: paymentRouter,
+  order: orderRouter,
+  stripe: stripeRouter,
 });
 
 // Export type router type signature,

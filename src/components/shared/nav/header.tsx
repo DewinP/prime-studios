@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useUserAuth } from "@/lib/use-user-auth";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -11,6 +11,7 @@ import {
   LogOut,
   LayoutDashboard,
   ChevronDown,
+  Package,
 } from "lucide-react";
 import { useCartStore } from "@/lib/cartStore";
 import {
@@ -23,23 +24,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function Header() {
-  const router = useRouter();
   const pathname = usePathname();
   const { user } = useUserAuth();
   const { signOut } = useAuth();
-  const isAdmin = user?.isAdmin;
+  const isAdmin = user?.role === "admin";
   const cartItems = useCartStore((state) => state.items);
 
   const handleSignOut = async () => {
     await signOut();
-    router.push("/");
+    window.location.href = "/";
   };
 
   return (
     <header className="supports-[backdrop-filter]:bg-background/60 border-border/50 bg-background/80 border-b backdrop-blur">
-      <div className="mx-auto flex flex-col items-center px-4 pt-6 pb-4">
+      <div className="mx-auto flex flex-col items-center px-4 pb-4">
         <div className="flex w-full items-center justify-center">
-          <Link href="/" className="mb-4 flex items-center justify-center">
+          <Link href="/" className="flex items-center justify-center">
             <Image
               src="/logo.png"
               alt="Prime Studios"
@@ -137,8 +137,8 @@ export function Header() {
               )}
             </Link>
 
-            {/* User dropdown */}
-            {user && (
+            {/* User dropdown or Auth buttons */}
+            {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-sm transition-all duration-200 hover:border-white/20 hover:bg-white/10">
@@ -169,12 +169,19 @@ export function Header() {
                           className="flex items-center gap-2"
                         >
                           <LayoutDashboard className="h-4 w-4" />
-                          Admin Dashboard
+                          Dashboard
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
                   )}
+                  <DropdownMenuItem asChild>
+                    <Link href="/orders" className="flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      My Orders
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={handleSignOut}
                     className="text-destructive focus:text-destructive flex items-center gap-2"
@@ -184,6 +191,26 @@ export function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/auth/login"
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-sm transition-all duration-200 hover:border-white/20 hover:bg-white/10"
+                >
+                  <User className="text-foreground h-5 w-5" />
+                  <span className="text-foreground text-sm font-medium">
+                    Login
+                  </span>
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="border-primary bg-primary hover:bg-primary/90 flex items-center gap-2 rounded-lg border px-3 py-2 backdrop-blur-sm transition-all duration-200"
+                >
+                  <span className="text-primary-foreground text-sm font-medium">
+                    Sign Up
+                  </span>
+                </Link>
+              </div>
             )}
           </div>
         </div>

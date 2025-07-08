@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,6 @@ interface LicenseSelectModalProps {
   onSelect: (license: LicensePrice) => void;
   title?: string;
   currentLicense?: string;
-  showTrackInfo?: boolean;
   trackName?: string;
   artist?: string;
   coverUrl?: string | null | undefined;
@@ -35,7 +34,6 @@ export function LicenseSelectModal({
   onSelect,
   title = "Select a License",
   currentLicense,
-  showTrackInfo = false,
   trackName,
   artist,
   coverUrl,
@@ -50,12 +48,14 @@ export function LicenseSelectModal({
         </DialogHeader>
         <div className="space-y-6">
           {/* Track Info Section */}
-          {(trackName || artist || coverUrl) && (
+          {(trackName ?? artist ?? coverUrl) && (
             <div className="border-border mb-4 flex items-center gap-4 border-b pb-4">
               {coverUrl && (
-                <img
+                <Image
                   src={coverUrl}
-                  alt={trackName}
+                  alt={trackName ?? "Track Cover"}
+                  width={64}
+                  height={64}
                   className="border-border h-16 w-16 rounded-lg border object-cover shadow"
                 />
               )}

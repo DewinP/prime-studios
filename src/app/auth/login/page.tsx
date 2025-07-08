@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,13 +14,12 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   // Check for error parameter
   const errorParam = searchParams.get("error");
   if (errorParam === "unauthorized") {
-    setError("Access denied. Admin privileges required.");
+    setError("Access denied. Please sign in to continue.");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -57,10 +56,10 @@ function LoginForm() {
               className="text-gradient-brand text-center text-3xl"
               style={{ fontFamily: "alfarn-2" }}
             >
-              Studio Admin Login
+              Login
             </CardTitle>
             <p className="text-muted-foreground mt-2 text-center text-sm">
-              Admin access only.
+              Sign in to your account.
             </p>
           </CardHeader>
           <CardContent>
@@ -116,7 +115,7 @@ function LoginForm() {
   );
 }
 
-export default function AdminLoginPage() {
+export default function LoginPage() {
   return (
     <Suspense
       fallback={

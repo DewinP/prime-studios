@@ -2,11 +2,12 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Clock, User, ShoppingCart, Check } from "lucide-react";
+import { Play, Pause, Clock, User, ShoppingCart } from "lucide-react";
 import { usePlayerStore } from "@/lib/playerStore";
 import { useCartStore } from "@/lib/cartStore";
 import type { RouterOutputs } from "@/trpc/react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -59,14 +60,6 @@ export function TrackList({ tracks }: TrackListProps) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  };
-
-  const formatDate = (date: Date): string => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
   };
 
   if (tracks.length === 0) {
@@ -172,9 +165,11 @@ export function TrackList({ tracks }: TrackListProps) {
                           transition={{ duration: 0.2 }}
                         >
                           <div className="relative h-10 w-10 overflow-hidden rounded-lg border border-white/20 shadow-md">
-                            <img
+                            <Image
                               src={track.coverUrl ?? "/logo.png"}
                               alt={track.name}
+                              width={40}
+                              height={40}
                               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                             />
                             {isCurrentTrack && isTrackPlaying && (
@@ -291,8 +286,6 @@ export function TrackList({ tracks }: TrackListProps) {
                             (item) => item.trackId === track.id,
                           );
                           const isInCart = trackCartItems.length > 0;
-                          const selectedLicense =
-                            trackCartItems[0]?.licenseType;
 
                           return (
                             <div className="relative">
