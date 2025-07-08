@@ -6,6 +6,7 @@ import {
 } from "@/server/api/trpc";
 import { stripe } from "@/lib/stripe";
 import type { Prisma } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 
 export const orderRouter = createTRPCRouter({
   getOrderHistory: protectedProcedure.query(async ({ ctx }) => {
@@ -365,5 +366,77 @@ export const orderRouter = createTRPCRouter({
         },
       });
       return order;
+    }),
+
+  getOrderById: protectedProcedure
+    .input(z.object({ orderId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const order = await ctx.db.order.findFirst({
+        where: { id: input.orderId },
+        include: {
+          items: {
+            include: {
+              track: true,
+              trackPrice: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      if (!order) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Order not found",
+        });
+      }
+
+      return order;
+    }),
+
+  getPaymentDetails: protectedProcedure
+    .input(z.object({ orderId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const order = await ctx.db.order.findFirst({
+        where: { id: input.orderId },
+        select: { stripePaymentId: true },
+      });
+
+      if (!order?.stripePaymentId) {
+        return null;
+      }
+
+      try {
+        // Fetch payment intent from Stripe
+        const paymentIntent = await stripe.paymentIntents.retrieve(
+          order.stripePaymentId,
+        );
+
+        if (paymentIntent.payment_method) {
+          // Fetch payment method details
+          const paymentMethod = await stripe.paymentMethods.retrieve(
+            paymentIntent.payment_method as string,
+          );
+
+          return {
+            last4: paymentMethod.card?.last4,
+            brand: paymentMethod.card?.brand,
+            expMonth: paymentMethod.card?.exp_month,
+            expYear: paymentMethod.card?.exp_year,
+            country: paymentMethod.card?.country,
+          };
+        }
+
+        return null;
+      } catch (error) {
+        console.error("Error fetching payment details from Stripe:", error);
+        return null;
+      }
     }),
 });

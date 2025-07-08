@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/trpc/react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -178,7 +179,7 @@ export default function OrdersPage() {
                 <Search className="text-muted-foreground absolute top-3 left-3 h-4 w-4" />
                 <Input
                   id="search"
-                  placeholder="Order #, email, name..."
+                  placeholder="Order #, billing email, billing name, user email..."
                   value={filters.search}
                   onChange={(e) => handleSearch(e.target.value)}
                   className="pl-10"
@@ -306,10 +307,10 @@ export default function OrdersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Order #</TableHead>
-                  <TableHead>Customer</TableHead>
+                  <TableHead>Billing Info</TableHead>
+                  <TableHead>User</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Items</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                 </TableRow>
               </TableHeader>
@@ -329,6 +330,16 @@ export default function OrdersPage() {
                       </div>
                     </TableCell>
                     <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4 rounded-full" />
+                        <div className="space-y-1">
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-3 w-28" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <Skeleton className="h-6 w-16 rounded-full" />
                     </TableCell>
                     <TableCell>
@@ -337,12 +348,7 @@ export default function OrdersPage() {
                         <Skeleton className="h-4 w-20" />
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-4 w-4" />
-                        <Skeleton className="h-4 w-16" />
-                      </div>
-                    </TableCell>
+
                     <TableCell className="text-right">
                       <Skeleton className="ml-auto h-4 w-16" />
                     </TableCell>
@@ -372,10 +378,10 @@ export default function OrdersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Order #</TableHead>
-                    <TableHead>Customer</TableHead>
+                    <TableHead>Billing Info</TableHead>
+                    <TableHead>User</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead>Items</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -383,18 +389,44 @@ export default function OrdersPage() {
                   {orders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">
-                        {order.orderNumber}
+                        <Link
+                          href={`/dashboard/orders/${order.id}`}
+                          className="hover:text-primary transition-colors"
+                        >
+                          {order.orderNumber}
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <User className="text-muted-foreground h-4 w-4" />
                           <div>
                             <div className="font-medium">
-                              {order.user?.name ?? "Guest"}
+                              {order.billingName ?? "Guest Customer"}
                             </div>
                             <div className="text-muted-foreground text-xs">
-                              {order.user?.email ?? order.billingEmail}
+                              {order.billingEmail}
                             </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <User className="text-muted-foreground h-4 w-4" />
+                          <div>
+                            {order.user ? (
+                              <>
+                                <div className="font-medium">
+                                  {order.user.name}
+                                </div>
+                                <div className="text-muted-foreground text-xs">
+                                  {order.user.email}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-muted-foreground text-sm">
+                                Guest User
+                              </div>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -412,18 +444,15 @@ export default function OrdersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-2"
+                        >
                           <Calendar className="text-muted-foreground h-4 w-4" />
                           {new Date(order.createdAt).toLocaleDateString()}
-                        </div>
+                        </Badge>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Music className="text-muted-foreground h-4 w-4" />
-                          {order.items.length} track
-                          {order.items.length !== 1 ? "s" : ""}
-                        </div>
-                      </TableCell>
+
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1 font-semibold">
                           <DollarSign className="h-4 w-4" />
