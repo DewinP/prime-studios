@@ -148,7 +148,7 @@ export function UploadTrackModal({
     try {
       const uploadResult = await uploadService.uploadAudioFile(
         formData.audioFile,
-        user.id,
+        user?.id ?? "",
       );
 
       if (!uploadResult.success || !uploadResult.url) {

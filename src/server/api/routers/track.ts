@@ -94,7 +94,7 @@ export const trackRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
+      if (ctx.user?.role !== "admin") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only admins can create tracks",
@@ -186,7 +186,7 @@ export const trackRouter = createTRPCRouter({
         });
       }
 
-      if (ctx.user.role !== "admin" && track.userId !== ctx.user.id) {
+      if (ctx.user?.role !== "admin" || track.userId !== ctx.user.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You can only update your own tracks",
@@ -281,7 +281,7 @@ export const trackRouter = createTRPCRouter({
         });
       }
 
-      if (ctx.user.role !== "admin" && track.userId !== ctx.user.id) {
+      if (ctx.user?.role !== "admin" || track.userId !== ctx.user?.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You can only delete your own tracks",

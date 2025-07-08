@@ -42,7 +42,7 @@ export function AuthenticatedRoute({
   // Don't render anything if not authenticated (will redirect)
   if (!session.isAuthenticated) {
     return (
-      fallback || (
+      fallback ?? (
         <div className="flex h-full items-center justify-center py-12">
           <div className="flex flex-col items-center gap-3">
             <Package className="text-muted-foreground h-8 w-8 animate-pulse" />

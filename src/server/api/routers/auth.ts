@@ -19,7 +19,7 @@ export const authRouter = createTRPCRouter({
     });
     return { ...ctx.session, user };
   }),
-  getAllAdmins: protectedAdminRoute.query(async ({ ctx }) => {
+  getAllAdmins: protectedAdminRoute.query(async () => {
     const adminUsers = await db.user.findMany({
       where: {
         role: "admin",

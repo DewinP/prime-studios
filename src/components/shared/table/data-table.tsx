@@ -687,7 +687,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
+                    tickFormatter={(value) => String(value).slice(0, 3)}
                     hide
                   />
                   <ChartTooltip

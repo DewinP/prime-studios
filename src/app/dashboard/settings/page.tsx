@@ -1,8 +1,5 @@
 "use client";
 
-import { useUserAuth } from "@/lib/use-user-auth";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import {
   Card,
   CardContent,
