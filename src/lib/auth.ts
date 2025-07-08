@@ -51,7 +51,7 @@ export const auth = betterAuth({
     }),
   ],
   baseURL: `${getBaseUrl()}/api/auth`,
-  trustedOrigins: [getBaseUrl(), " https://db6437152f20.ngrok-free.app"],
+  trustedOrigins: [getBaseUrl(), env.BETTER_AUTH_URL],
   secret: env.BETTER_AUTH_SECRET,
 });
 
