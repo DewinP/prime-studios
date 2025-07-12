@@ -7,6 +7,7 @@ import {
 import { stripe } from "@/lib/stripe";
 import type { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export const orderRouter = createTRPCRouter({
   getOrderHistory: protectedProcedure.query(async ({ ctx }) => {
@@ -350,6 +351,154 @@ export const orderRouter = createTRPCRouter({
       topTracks,
     };
   }),
+
+  getUserPurchasedTracks: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    // Get all order items for the user that contain tracks
+    const orderItems = await ctx.db.orderItem.findMany({
+      where: {
+        order: {
+          userId: userId,
+          status: "paid",
+        },
+        trackId: {
+          not: null,
+        },
+      },
+      include: {
+        track: true,
+        order: {
+          select: {
+            orderNumber: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: {
+        order: {
+          createdAt: "desc",
+        },
+      },
+    });
+
+    // Group by track and include all license types purchased
+    const trackMap = new Map<
+      string,
+      {
+        track: {
+          id: string;
+          name: string;
+          artist: string;
+          description: string | null;
+          duration: number;
+          audioUrl: string;
+          coverUrl: string | null;
+          status: string;
+          plays: number;
+          createdAt: Date;
+          updatedAt: Date;
+          userId: string;
+          stripeProductId: string | null;
+        };
+        licenses: Array<{
+          licenseType: string;
+          orderNumber: string;
+          purchasedAt: Date;
+        }>;
+      }
+    >();
+
+    orderItems.forEach((item) => {
+      if (item.track) {
+        const existing = trackMap.get(item.track.id) ?? {
+          track: item.track,
+          licenses: [],
+        };
+
+        existing.licenses.push({
+          licenseType: item.licenseType,
+          orderNumber: item.order.orderNumber,
+          purchasedAt: item.order.createdAt,
+        });
+
+        trackMap.set(item.track.id, existing);
+      }
+    });
+
+    return Array.from(trackMap.values());
+  }),
+
+  getDownloadUrl: protectedProcedure
+    .input(z.object({ trackId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { trackId } = input;
+      const userId = ctx.session.user.id;
+
+      // Verify user has purchased this track
+      const orderItem = await ctx.db.orderItem.findFirst({
+        where: {
+          trackId: trackId,
+          order: {
+            userId: userId,
+            status: "paid",
+          },
+        },
+      });
+
+      if (!orderItem) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to this track",
+        });
+      }
+
+      // Get track details
+      const track = await ctx.db.track.findUnique({
+        where: { id: trackId },
+      });
+
+      if (!track) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Track not found",
+        });
+      }
+
+      // Extract file path from audioUrl
+      const url = new URL(track.audioUrl);
+      const pathParts = url.pathname.split("/");
+      const tracksIndex = pathParts.findIndex((part) => part === "tracks");
+
+      if (tracksIndex === -1 || tracksIndex >= pathParts.length - 1) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Invalid track URL",
+        });
+      }
+
+      const filePath = pathParts.slice(tracksIndex + 1).join("/");
+
+      // Generate signed URL for download
+      const { data: signedUrlData, error: signedUrlError } =
+        await supabaseServer.storage
+          .from("tracks")
+          .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+      if (signedUrlError || !signedUrlData?.signedUrl) {
+        console.error("Error generating signed URL:", signedUrlError);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to generate download link",
+        });
+      }
+
+      return {
+        downloadUrl: signedUrlData.signedUrl,
+        trackName: track.name,
+        artist: track.artist,
+      };
+    }),
 
   getOrderBySessionId: publicProcedure
     .input(z.object({ sessionId: z.string() }))

@@ -8,6 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useUserAuth } from "@/lib/use-user-auth";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface LicensePrice {
   licenseType: string;
@@ -38,6 +41,21 @@ export function LicenseSelectModal({
   artist,
   coverUrl,
 }: LicenseSelectModalProps) {
+  const { isAuthenticated } = useUserAuth();
+  const router = useRouter();
+
+  const handleNegotiatePrice = () => {
+    if (!isAuthenticated) {
+      toast.error("You need to be logged in to negotiate the price");
+      router.push("/auth/login");
+      onClose();
+      return;
+    }
+
+    // TODO: Implement negotiate price functionality for authenticated users
+    toast.info("Negotiate price feature coming soon!");
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-card border-border min-w-2xl">
@@ -104,7 +122,7 @@ export function LicenseSelectModal({
                 if (price.price > 0) {
                   // Show price as usual
                   return (
-                    <button
+                    <Button
                       key={price.licenseType}
                       tabIndex={0}
                       aria-pressed={isSelected}
@@ -157,7 +175,7 @@ export function LicenseSelectModal({
                           </svg>
                         </span>
                       )}
-                    </button>
+                    </Button>
                   );
                 } else {
                   // Show make an offer
@@ -184,7 +202,7 @@ export function LicenseSelectModal({
               }
 
               return (
-                <button
+                <Button
                   key={price.licenseType}
                   tabIndex={0}
                   aria-pressed={isSelected}
@@ -241,7 +259,7 @@ export function LicenseSelectModal({
                       </svg>
                     </span>
                   )}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -254,9 +272,12 @@ export function LicenseSelectModal({
               <span className="text-muted-foreground mb-2">
                 Or, you can also:
               </span>
-              <button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-3 text-base font-bold shadow transition">
+              <Button
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-3 text-base font-bold shadow transition"
+                onClick={handleNegotiatePrice}
+              >
                 ✦ Negotiate the price
-              </button>
+              </Button>
             </div>
           )}
 

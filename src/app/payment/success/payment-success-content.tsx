@@ -4,11 +4,12 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Download, Music, ArrowLeft } from "lucide-react";
+import { CheckCircle, Music, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useCartStore } from "@/lib/cartStore";
 import { api } from "@/trpc/react";
+import { DownloadButton } from "@/components/shared/download-button";
 
 export function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -149,14 +150,14 @@ export function PaymentSuccessContent() {
                         <div className="text-foreground font-mono text-base">
                           ${(item.unitPrice / 100).toFixed(2)}
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-green-600"
-                        >
-                          <Download className="mr-1 h-4 w-4" />
-                          Download
-                        </Button>
+                        {item.track && (
+                          <DownloadButton
+                            trackId={item.track.id}
+                            variant="ghost"
+                            size="sm"
+                            className="text-green-600"
+                          />
+                        )}
                       </div>
                     </div>
                   ))}

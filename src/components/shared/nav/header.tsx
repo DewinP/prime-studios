@@ -11,7 +11,7 @@ import {
   LogOut,
   LayoutDashboard,
   ChevronDown,
-  Package,
+  Music,
 } from "lucide-react";
 import { useCartStore } from "@/lib/cartStore";
 import {
@@ -49,23 +49,21 @@ export function Header() {
             />
           </Link>
         </div>
-        <div className="relative mt-4 flex w-full items-center justify-between">
-          {/* Left spacer to balance the layout */}
-          <div className="pointer-events-none flex items-center space-x-4 opacity-0">
+        <div className="relative mt-4 flex w-full items-center">
+          {/* Left side - Invisible spacer to balance the layout */}
+          <div className="pointer-events-none flex items-center gap-4 opacity-0">
             <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
               <ShoppingCart className="h-6 w-6" />
               <span className="text-sm font-medium">Cart</span>
             </div>
-            {user && (
-              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <User className="h-5 w-5" />
-                <span className="text-sm font-medium">User</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <User className="h-5 w-5" />
+              <span className="text-sm font-medium">User</span>
+            </div>
           </div>
 
-          {/* Main Navigation - Dead Center */}
-          <nav className="absolute left-1/2 flex -translate-x-1/2 transform items-center space-x-8 text-sm font-medium">
+          {/* Main Navigation - Absolutely Centered */}
+          <nav className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center space-x-8">
             <Link
               href="/"
               className={`transition-all duration-200 ease-in-out ${
@@ -89,6 +87,17 @@ export function Header() {
               ABOUT
             </Link>
             <Link
+              href="/book"
+              className={`transition-all duration-200 ease-in-out ${
+                pathname === "/book"
+                  ? "text-primary font-semibold"
+                  : "text-foreground/80 hover:text-primary hover:scale-105"
+              }`}
+              style={{ fontFamily: "alfarn-2" }}
+            >
+              BOOK
+            </Link>
+            <Link
               href="/contact"
               className={`transition-all duration-200 ease-in-out ${
                 pathname === "/contact"
@@ -101,8 +110,8 @@ export function Header() {
             </Link>
           </nav>
 
-          {/* Cart and User - Right aligned */}
-          <div className="flex items-center space-x-4">
+          {/* Right side - Cart and User */}
+          <div className="ml-auto flex items-center gap-4">
             {/* Cart */}
             <Link href="/cart" className="relative">
               {cartItems.length > 0 ? (
@@ -177,8 +186,8 @@ export function Header() {
                   )}
                   <DropdownMenuItem asChild>
                     <Link href="/orders" className="flex items-center gap-2">
-                      <Package className="h-4 w-4" />
-                      My Orders
+                      <Music className="h-4 w-4" />
+                      My Library
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

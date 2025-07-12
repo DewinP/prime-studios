@@ -13,7 +13,7 @@ if (!env.SUPABASE_SERVICE_ROLE_KEY) {
 // Server-side Supabase client
 export const supabaseServer = createClient(
   env.NEXT_PUBLIC_SUPABASE_URL,
-  env.SUPABASE_SERVICE_ROLE_KEY, // Use service role key for server-side operations
+  env.SUPABASE_SERVICE_ROLE_KEY,
   {
     auth: {
       autoRefreshToken: false,

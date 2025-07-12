@@ -3,6 +3,7 @@ import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { stripe } from "@/lib/stripe";
 import { env } from "@/env";
 import { TRPCError } from "@trpc/server";
+import { sendOrderEmail, createOrderEmailTemplate } from "@/lib/email";
 
 export const stripeRouter = createTRPCRouter({
   webhook: publicProcedure
@@ -168,6 +169,40 @@ export const stripeRouter = createTRPCRouter({
                 },
               });
 
+              // Send order confirmation email to billing email and user email (if logged in)
+              const emailsToSend = new Set<string>();
+              if (order.billingEmail) {
+                emailsToSend.add(order.billingEmail);
+              }
+              if (order.userId) {
+                const user = await ctx.db.user.findUnique({
+                  where: { id: order.userId },
+                });
+                if (user?.email) {
+                  emailsToSend.add(user.email);
+                }
+              }
+
+              const emailHtml = createOrderEmailTemplate({
+                orderNumber: order.orderNumber,
+                total: order.total,
+                items: order.items.map((item) => ({
+                  trackName: item.track?.name ?? "Track",
+                  licenseType: item.licenseType,
+                  unitPrice: item.unitPrice,
+                })),
+                customerName: order.billingName ?? undefined,
+              });
+
+              for (const email of emailsToSend) {
+                console.log("Sending email to:", email);
+                await sendOrderEmail({
+                  to: email,
+                  subject: "Your Order Confirmation - Prime Studios",
+                  html: emailHtml,
+                });
+              }
+
               console.log(
                 "✅ ORDER CREATED SUCCESSFULLY:",
                 order.id,
@@ -281,6 +316,40 @@ export const stripeRouter = createTRPCRouter({
                   },
                 },
               });
+
+              // Send order confirmation email to billing email and user email (if logged in)
+              const emailsToSend = new Set<string>();
+              if (order.billingEmail) {
+                emailsToSend.add(order.billingEmail);
+              }
+              if (order.userId) {
+                const user = await ctx.db.user.findUnique({
+                  where: { id: order.userId },
+                });
+                if (user?.email) {
+                  emailsToSend.add(user.email);
+                }
+              }
+
+              const emailHtml = createOrderEmailTemplate({
+                orderNumber: order.orderNumber,
+                total: order.total,
+                items: order.items.map((item) => ({
+                  trackName: item.track?.name ?? "Track",
+                  licenseType: item.licenseType,
+                  unitPrice: item.unitPrice,
+                })),
+                customerName: order.billingName ?? undefined,
+              });
+
+              for (const email of emailsToSend) {
+                console.log("Sending email to:", email);
+                await sendOrderEmail({
+                  to: email,
+                  subject: "Your Order Confirmation - Prime Studios",
+                  html: emailHtml,
+                });
+              }
 
               console.log(
                 "[Webhook] Order created from async payment:",
