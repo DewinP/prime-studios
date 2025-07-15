@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, Suspense, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { EmailVerificationModal } from "@/components/shared/email-verification-modal";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -15,6 +16,25 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const email = searchParams.get("verifyEmail");
+    if (email) {
+      setVerifyEmail(email);
+      setShowVerifyModal(true);
+    }
+  }, [searchParams]);
+
+  function handleCloseModal() {
+    setShowVerifyModal(false);
+    // Remove the query param
+    const params = new URLSearchParams(window.location.search);
+    params.delete("verifyEmail");
+    router.replace(`/auth/login${params.toString() ? `?${params}` : ""}`);
+  }
 
   // Check for error parameter
   const errorParam = searchParams.get("error");
@@ -69,6 +89,11 @@ function LoginForm() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+            <EmailVerificationModal
+              isOpen={showVerifyModal}
+              onClose={handleCloseModal}
+              email={verifyEmail ?? ""}
+            />
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>

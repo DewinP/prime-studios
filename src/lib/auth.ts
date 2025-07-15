@@ -5,6 +5,8 @@ import { oAuthProxy, admin } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
 import { env } from "@/env";
+import { Resend } from "resend";
+import { createEmailVerificationTemplate } from "./email-templates";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") {
@@ -29,16 +31,35 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
+const resend = new Resend(env.RESEND_API_KEY);
+
+// Use test email in development, actual domain in production
+const getFromEmail = () => {
+  if (env.NODE_ENV === "development") {
+    return "onboarding@resend.dev";
+  }
+  return "Prime Studios NYC <no-reply@primestudiosnyc.com>";
+};
+
 export const auth = betterAuth({
   database: prismaAdapter(db, {
     provider: "postgresql",
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false,
+    requireEmailVerification: true,
     minPasswordLength: 6,
-    signUp: {
-      enabled: true,
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await resend.emails.send({
+        from: getFromEmail(),
+        to: user.email,
+        subject: "Email Verification",
+        html: createEmailVerificationTemplate({ url }),
+      });
     },
   },
   plugins: [

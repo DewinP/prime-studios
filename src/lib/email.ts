@@ -7,6 +7,14 @@ import {
 
 const resend = new Resend(env.RESEND_API_KEY);
 
+// Use test email in development, actual domain in production
+const getFromEmail = () => {
+  if (env.NODE_ENV === "development") {
+    return "Prime Studios NYC <onboarding@resend.dev>";
+  }
+  return "Prime Studios NYC <no-reply@primestudiosnyc.com>";
+};
+
 export async function sendOrderEmail({
   to,
   subject,
@@ -17,7 +25,7 @@ export async function sendOrderEmail({
   html: string;
 }) {
   return resend.emails.send({
-    from: "Prime Studios NYC <onboarding@resend.dev>",
+    from: getFromEmail(),
     to,
     subject,
     html,
@@ -123,8 +131,8 @@ export async function sendContactEmail({
   `;
 
   return resend.emails.send({
-    from: "Prime Studios NYC <onboarding@resend.dev>",
-    to: "inquiries@primestudiosnyc.com",
+    from: getFromEmail(),
+    to: "primestudiosnyc@gmail.com",
     subject: `New Contact Form: ${subject}`,
     html,
     replyTo: email,
@@ -164,8 +172,8 @@ export async function sendBookingEmail({
   });
 
   return resend.emails.send({
-    from: "Prime Studios NYC <onboarding@resend.dev>",
-    to: "inquiries@primestudiosnyc.com",
+    from: getFromEmail(),
+    to: "primestudiosnyc@gmail.com",
     subject: `New Booking Inquiry: ${servicesDisplay}`,
     html,
     replyTo: email,

@@ -106,7 +106,7 @@ export function createOrderEmailTemplate({
           <!-- Contact -->
           <div style="text-align: center; padding: 20px 0; border-top: 1px solid #333333;">
             <p style="margin: 0; color: #999999; font-size: 14px;">
-              Questions? Contact us at support@primestudiosnyc.com
+              Questions? Contact us at primestudiosnyc@gmail.com
             </p>
           </div>
         </div>
@@ -334,6 +334,80 @@ export function createBookingEmailTemplate({
         <div style="background-color: #0a0a0a; padding: 20px; text-align: center; border-top: 1px solid #333333;">
           <p style="margin: 0; color: #666666; font-size: 12px;">
             © 2025 Prime Studios NYC
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+export function createEmailVerificationTemplate({
+  url,
+}: {
+  url: string;
+}) {
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Email Verification - Prime Studios</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a; color: #ffffff;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #0a0a0a;">
+        <!-- Header -->
+        <div style="background-color: #e5a629; padding: 30px 20px; text-align: center;">
+          <h1 style="margin: 0; color: #0a0a0a; font-size: 24px; font-weight: bold;">
+            EMAIL VERIFICATION
+          </h1>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 30px 20px;">
+          <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h2 style="margin: 0 0 20px 0; color: #e5a629; font-size: 20px; font-weight: 600;">
+              Welcome to Prime Studios
+            </h2>
+            
+            <p style="margin: 0 0 20px 0; color: #cccccc; font-size: 16px; line-height: 1.6;">
+              Thank you for signing up! To complete your registration and access your account, please verify your email address by clicking the button below.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${url}" style="background-color: #e5a629; color: #0a0a0a; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px; transition: all 0.3s ease;">
+                Verify Email Address
+              </a>
+            </div>
+
+            <p style="margin: 20px 0 0 0; color: #999999; font-size: 14px; line-height: 1.5;">
+              If the button doesn't work, you can copy and paste this link into your browser:
+            </p>
+            <p style="margin: 10px 0 0 0; color: #e5a629; font-size: 14px; word-break: break-all;">
+              <a href="${url}" style="color: #e5a629; text-decoration: none;">${url}</a>
+            </p>
+          </div>
+
+          <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #e5a629; font-size: 16px; font-weight: 600;">
+              What's Next?
+            </h3>
+            <ul style="margin: 0; padding-left: 20px; color: #cccccc; font-size: 14px; line-height: 1.6;">
+              <li>Verify your email to activate your account</li>
+              <li>Access your dashboard and manage your music</li>
+              <li>Browse and purchase tracks from our library</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #0a0a0a; padding: 20px; text-align: center; border-top: 1px solid #333333;">
+          <p style="margin: 0 0 10px 0; color: #666666; font-size: 12px;">
+            If you didn't create an account with Prime Studios, you can safely ignore this email.
+          </p>
+          <p style="margin: 0; color: #666666; font-size: 12px;">
+            © 2025 Prime Studios
           </p>
         </div>
       </div>

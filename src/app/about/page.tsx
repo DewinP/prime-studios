@@ -21,7 +21,7 @@ export default function AboutPage() {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               <Image
                 src="/studio-equipment.jpg"
-                alt="Prime Studio Inside"
+                alt="Prime Studios Recording Studio"
                 width={800}
                 height={600}
                 className="h-[400px] w-full transform object-cover transition-transform duration-700 group-hover:scale-105 lg:h-[500px]"
@@ -56,14 +56,10 @@ export default function AboutPage() {
                 Prime Studios
               </h1>
               <p className="text-muted-foreground text-xl leading-relaxed">
-                Where creativity meets technology. Our state-of-the-art
-                recording studio provides the perfect environment for artists to
-                bring their vision to life.
+                A professional recording studio in the heart of the Bronx, where artists come to create their best music.
               </p>
               <p className="text-foreground/80 text-lg leading-relaxed">
-                From intimate acoustic sessions to full-band recordings, we
-                offer professional-grade equipment and experienced engineers to
-                capture your sound with pristine quality.
+                We provide a comfortable, creative space for recording, mixing, and mastering. We have the equipment and experience to help you capture your sound.
               </p>
             </div>
 
@@ -77,7 +73,7 @@ export default function AboutPage() {
                   <div>
                     <p className="text-muted-foreground text-sm">Location</p>
                     <p className="font-medium">
-                      1234 Studio Lane, City, Country
+                      1431 Beach Ave, Bronx, NY 10460
                     </p>
                   </div>
                 </CardContent>
@@ -90,13 +86,13 @@ export default function AboutPage() {
                   </div>
                   <div>
                     <p className="text-muted-foreground text-sm">Email</p>
-                    <p className="font-medium">hello@primestudios.com</p>
+                    <p className="font-medium">primestudiosnyc@gmail.com</p>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Features */}
+            {/* Services */}
             <div className="grid grid-cols-3 gap-4 pt-4">
               <div className="bg-background/40 border-border/30 rounded-lg border p-4 text-center backdrop-blur-sm">
                 <div className="bg-primary/10 mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full">

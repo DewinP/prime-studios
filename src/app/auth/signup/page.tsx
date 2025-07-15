@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,7 +32,8 @@ export default function SignupPage() {
       if (error) {
         setError(error.message ?? "Signup failed");
       } else {
-        window.location.href = "/";
+        // Redirect to login with query param to show modal
+        router.push(`/auth/login?verifyEmail=${encodeURIComponent(email)}`);
       }
     } catch (err) {
       console.error(err);

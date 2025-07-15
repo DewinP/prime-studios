@@ -197,6 +197,7 @@ export default function BookPage() {
             <div>
               <Label
                 htmlFor="phone"
+              
                 className="mb-2 flex items-center gap-1 py-2 text-sm font-medium"
               >
                 <span className="text-primary">
@@ -205,10 +206,11 @@ export default function BookPage() {
                 Phone Number
               </Label>
               <Input
+               required
                 id="phone"
                 name="phone"
                 type="tel"
-                placeholder="Phone Number (optional)"
+                placeholder="Phone Number"
                 value={formData.phone}
                 onChange={handleInputChange}
                 disabled={bookingMutation.isPending}

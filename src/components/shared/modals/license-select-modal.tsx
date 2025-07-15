@@ -52,8 +52,9 @@ export function LicenseSelectModal({
       return;
     }
 
-    // TODO: Implement negotiate price functionality for authenticated users
-    toast.info("Negotiate price feature coming soon!");
+    // Redirect to contact page for price negotiation
+    router.push("/contact");
+    onClose();
   };
 
   return (

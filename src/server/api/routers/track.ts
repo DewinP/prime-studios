@@ -281,50 +281,49 @@ export const trackRouter = createTRPCRouter({
         });
       }
 
-      if (ctx.user?.role !== "admin" || track.userId !== ctx.user?.id) {
+      if (ctx.user?.role !== "admin" && track.userId !== ctx.user?.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You can only delete your own tracks",
         });
       }
 
-      try {
-        // Extract the file path from the audioUrl
-        // The audioUrl is stored as a full public URL like:
-        // https://project.supabase.co/storage/v1/object/public/tracks/userId/filename.mp3
-        const url = new URL(track.audioUrl);
-        const pathParts = url.pathname.split("/");
+      // Helper function to delete file from storage
+      const deleteFileFromStorage = async (fileUrl: string, bucket: string) => {
+        try {
+          const url = new URL(fileUrl);
+          const pathParts = url.pathname.split("/");
+          const bucketIndex = pathParts.findIndex((part) => part === bucket);
 
-        console.log("URL pathname:", url.pathname);
-        console.log("Path parts:", pathParts);
+          if (bucketIndex !== -1 && bucketIndex < pathParts.length - 1) {
+            const filePath = pathParts.slice(bucketIndex + 1).join("/");
 
-        // Find the index of 'tracks' in the path and get everything after it
-        const tracksIndex = pathParts.findIndex((part) => part === "tracks");
-        console.log("Tracks index:", tracksIndex);
+            if (filePath) {
+              const { error: storageError } = await supabaseServer.storage
+                .from(bucket)
+                .remove([filePath]);
 
-        if (tracksIndex !== -1 && tracksIndex < pathParts.length - 1) {
-          const filePath = pathParts.slice(tracksIndex + 1).join("/");
-          console.log("Extracted file path:", filePath);
-
-          if (filePath) {
-            console.log("Attempting to delete file:", filePath);
-            const { error: storageError } = await supabaseServer.storage
-              .from("tracks")
-              .remove([filePath]);
-
-            if (storageError) {
-              console.error("Error deleting file from storage:", storageError);
-            } else {
-              console.log("Successfully deleted file from storage:", filePath);
+              if (storageError) {
+                console.error(
+                  `Error deleting file from ${bucket} storage:`,
+                  storageError,
+                );
+              } else {
+                console.log(
+                  `Successfully deleted file from ${bucket} storage:`,
+                  filePath,
+                );
+              }
             }
           }
-        } else {
-          console.error(
-            "Could not find 'tracks' in path or invalid path structure",
-          );
+        } catch (error) {
+          console.error(`Error deleting file from ${bucket} storage:`, error);
         }
-      } catch (error) {
-        console.error("Error deleting file from storage:", error);
+      };
+
+      // Delete audio file from storage
+      if (track.audioUrl) {
+        await deleteFileFromStorage(track.audioUrl, "tracks");
       }
 
       // Delete associated prices first
